@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#000000">
-<title>SIRB Aero: aircraft parts in Dubai</title>
-<meta name="description" content="Certified aircraft parts on the shelf at Dubai's airports, priced in dirhams, on the next flight out.">
+<title>SIRB Aero: online aircraft spare parts store in Dubai</title>
+<meta name="description" content="Buy certified aircraft spare parts online. Engine, landing gear, avionics and hydraulics, in stock in Dubai and priced in dirhams.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
 
 <header class="nav" id="nav">
   <div class="nav-in">
-    <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB</span></a>
+    <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB Aero</span></a>
     <nav class="links" aria-label="Main">
       <a href="#parts" data-t="navParts"></a>
       <a href="#aog" data-t="navAog"></a>
@@ -70,6 +70,8 @@
         <h2 class="d1" data-t="catT"></h2>
         <p class="sub" data-t="catS"></p>
       </header>
+      <div class="tiles reveal" id="tiles"></div>
+      <h3 class="listhead reveal" id="filters" data-t="listT"></h3>
       <div class="filterbar reveal">
         <div class="seg" id="fleetSeg" role="group"></div>
         <div class="seg seg-sub" id="catSeg" role="group"></div>
@@ -127,12 +129,12 @@
   <div class="wrap">
     <div class="foot-top">
       <div>
-        <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB</span></a>
-        <p data-t="fCo"></p>
+        <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB Aero</span></a>
+        <p class="foot-about" data-t="fAbout"></p><p data-t="fCo"></p>
       </div>
       <div class="foot-cols">
-        <div><h3 data-t="fShop"></h3><a href="#parts" data-t="navParts"></a><a href="#gulf" data-t="navGulf"></a></div>
-        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#trace" data-t="navTrace"></a></div>
+        <div><h3 data-t="fShop"></h3><a href="#parts" data-shop="gear" data-t="gear"></a><a href="#parts" data-shop="engine" data-t="engine"></a><a href="#parts" data-shop="avionics" data-t="avionics"></a><a href="#parts" data-shop="systems" data-t="systems"></a></div>
+        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#gulf" data-t="navGulf"></a><a href="#trace" data-t="navTrace"></a></div>
       </div>
     </div>
     <div class="foot-end"><span>© 2026 SIRB Aero</span><span data-t="demo"></span></div>

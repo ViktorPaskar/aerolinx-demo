@@ -25,7 +25,7 @@ function renderStatic() {
   $('langBtn').textContent = t('langBtn');
   $('curBtn').textContent = S.cur;
   $('curBtn').setAttribute('aria-label', S.cur === 'AED' ? 'Show prices in US dollars' : 'Show prices in dirhams');
-  renderChapters(); renderSegs(); renderGrid(); renderAog(); renderBento(); renderTrace(); renderClock(); renderCount();
+  renderChapters(); renderSegs(); renderTiles(); renderGrid(); renderAog(); renderBento(); renderTrace(); renderClock(); renderCount();
   if ($('drawer').open) renderDrawer();
   if ($('palette').open) renderPalette();
   observeReveals();
@@ -42,19 +42,45 @@ function renderChapters() {
     <div class="bar">${ch.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</div>
     <h3>${c.t}</h3><p>${c.d}</p>
     <ul>${c.i.map(x => `<li>${x}</li>`).join('')}</ul>
-    ${i === ch.length - 1 ? `<button class="solid jump" type="button" id="jumpBtn">${t('jump')}</button>` : ''}
+    <button class="solid jump" type="button" data-shop="engine">${t('jump')}</button>
   </div>`).join('');
   $('hotspots').innerHTML = ch.map(c => `<div class="hs" data-k="${c.k}"><button type="button" data-chapter="${c.k}">${c.t}</button><i></i></div>`).join('');
 }
 
 function setSeg(el, items, value, attr) {
   el.innerHTML = '<span class="thumb"></span>' + items.map(([v, l]) => `<button type="button" data-${attr}="${v}" aria-pressed="${v === value}">${l}</button>`).join('');
-  moveThumb(el);
+  moveThumb(el, true);
 }
-function moveThumb(el) {
+function moveThumb(el, instant) {
   const th = el.querySelector('.thumb'), b = el.querySelector('[aria-pressed=true]');
   if (!th || !b) return;
+  if (instant) th.style.transition = 'none';
   th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft}px)`;
+  if (instant) { void th.offsetWidth; th.style.transition = ''; }
+  else if (el.scrollWidth > el.clientWidth) {
+    el.scrollTo({ left: b.offsetLeft - (el.clientWidth - b.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+  }
+}
+function pressSeg(el, attr, value) {
+  el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-' + attr) === value)));
+  moveThumb(el);
+}
+function syncFilters() {
+  pressSeg($('fleetSeg'), 'fleet', S.fleet); pressSeg($('catSeg'), 'cat', S.cat);
+  renderGrid(); renderTiles();
+}
+function shop(cat) {
+  S.cat = cat; S.fleet = ''; syncFilters();
+  $('filters').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+}
+function renderTiles() {
+  const pics = { gear: 'SB-4471-02', engine: 'SM-9014', avionics: 'DU-8810-6', systems: 'BV-3290' };
+  $('tiles').innerHTML = CATS.map(c => {
+    return `<button class="ctile" type="button" data-shop="${c}" aria-pressed="${S.cat === c}">
+      <span class="ct-tx"><strong>${t(c)}</strong><span>${t('catD')[c]}</span><em>${t('view')}</em></span>
+      <img src="${byPn(pics[c]).img}" alt="">
+    </button>`;
+  }).join('');
 }
 function renderSegs() {
   setSeg($('fleetSeg'), [['', t('allA')], ...FLEET.map(f => [f, fleetName(f)])], S.fleet, 'fleet');
@@ -64,19 +90,19 @@ function renderSegs() {
 const WIDE = new Set(['SB-4471-02', 'FB-7728-11', 'TR-46172', 'TB-1140-7']);
 const visible = () => PARTS.filter(p => (!S.fleet || p.fits.includes(S.fleet)) && (!S.cat || p.cat === S.cat));
 
-function plusIcon(inq) { return `<svg width="20" height="20" aria-hidden="true"><use href="#${inq ? 'i-check' : 'i-plus'}"/></svg>`; }
+function buyLabel(inq) { return (inq ? '<svg width="16" height="16" aria-hidden="true"><use href="#i-check"/></svg>' : '') + `<span>${inq ? t('inq') : t('add')}</span>`; }
 function card(p) {
   const inq = !!S.quote[p.pn];
   return `<article class="card${WIDE.has(p.pn) ? ' wide' : ''}" data-card="${p.pn}">
     <div class="card-top"><span class="cond ${p.c}"><i></i>${t(p.c)}</span><span>${t('from')} ${p.from}</span></div>
-    <div class="pic"><img src="${p.img}" alt="${esc(p[S.lang])}" loading="lazy" decoding="async"></div>
+    <div class="pic"><img src="${p.img}" alt="${esc(p[S.lang])}" decoding="async"></div>
     <div class="card-b">
       <div class="pn" dir="ltr" style="text-align:start">${p.pn}</div>
       <h3>${p[S.lang]}</h3>
       <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi>. ${p.qty} ${t('inStock')}. <bdi>${p.doc}</bdi></p>
       <div class="buy">
         <div class="price">${money(p.aed)}<small>${t('exVat')}</small></div>
-        <button type="button" class="plus${inq ? ' in' : ''}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : t('add')) + ' ' + p.pn)}" aria-pressed="${inq}">${plusIcon(inq)}</button>
+        <button type="button" class="addbtn${inq ? ' in' : ''}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : t('add')) + ' ' + p.pn)}" aria-pressed="${inq}">${buyLabel(inq)}</button>
       </div>
     </div>
   </article>`;
@@ -174,7 +200,7 @@ function addPart(pn) {
   if (!S.quote[pn]) S.quote[pn] = { qty: 1 };
   renderCount();
   document.querySelectorAll(`[data-add="${CSS.escape(pn)}"]`).forEach(b => {
-    b.classList.add('in'); b.innerHTML = plusIcon(true); b.setAttribute('aria-pressed', 'true');
+    b.classList.add('in'); b.innerHTML = buyLabel(true); b.setAttribute('aria-pressed', 'true');
     b.setAttribute('aria-label', t('inq') + ' ' + pn);
   });
 }
@@ -199,6 +225,8 @@ const closePalette = () => { if ($('palette').open) $('palette').close(); };
 
 /* ---------- Events ---------- */
 document.addEventListener('click', e => {
+  const shopLink = e.target.closest('a[data-shop]');
+  if (shopLink) { e.preventDefault(); shop(shopLink.dataset.shop); return; }
   if (e.target === $('drawer')) { $('drawer').close(); return; }
   if (e.target === $('palette')) { closePalette(); return; }
   const row = e.target.closest('[data-pal]');
@@ -206,16 +234,16 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const d = b.dataset;
   if (d.add) { S.quote[d.add] ? openDrawer() : addPart(d.add); }
-  else if ('fleet' in d) { S.fleet = d.fleet; renderSegs(); renderGrid(); }
-  else if ('cat' in d) { S.cat = d.cat; renderSegs(); renderGrid(); }
-  else if (b.id === 'resetBtn' || b.id === 'resetBtn2') { S.fleet = ''; S.cat = ''; renderSegs(); renderGrid(); }
+  else if ('fleet' in d) { S.fleet = d.fleet; syncFilters(); }
+  else if ('cat' in d) { S.cat = d.cat; syncFilters(); }
+  else if (d.shop) shop(d.shop);
+  else if (b.id === 'resetBtn' || b.id === 'resetBtn2') { S.fleet = ''; S.cat = ''; syncFilters(); }
   else if (d.more) { S.quote[d.more].qty++; renderCount(); renderDrawer(); }
   else if (d.less) { if (--S.quote[d.less].qty < 1) { delete S.quote[d.less]; renderGrid(); } renderCount(); renderDrawer(); }
   else if ('openQuote' in d) openDrawer();
   else if ('close' in d) { S.sent = null; $('drawer').close(); $('parts').scrollIntoView(); }
   else if (d.source) { addPart(d.source.toUpperCase()); openDrawer(); }
   else if (d.chapter) jumpToChapter(d.chapter);
-  else if (b.id === 'jumpBtn') { S.cat = 'engine'; S.fleet = ''; renderSegs(); renderGrid(); $('parts').scrollIntoView(); }
   else if (b.id === 'copyBtn') {
     navigator.clipboard?.writeText(S.sent).then(() => { b.textContent = t('copied'); }).catch(() => {});
   }
@@ -252,7 +280,10 @@ document.addEventListener('pointermove', e => {
   c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px');
 }, { passive: true });
 addEventListener('resize', () => { moveThumb($('fleetSeg')); moveThumb($('catSeg')); });
-document.fonts?.ready.then(() => { moveThumb($('fleetSeg')); moveThumb($('catSeg')); });
+// Web fonts can arrive after the first measure, most often Arabic after switching language.
+const refitThumbs = () => { moveThumb($('fleetSeg'), true); moveThumb($('catSeg'), true); };
+document.fonts?.ready.then(refitThumbs);
+document.fonts?.addEventListener?.('loadingdone', refitThumbs);
 
 let revealIO;
 function observeReveals() {
