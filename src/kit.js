@@ -23,6 +23,28 @@ export function makeStudioEnv(renderer, opts = {}) {
   return tex;
 }
 
+// A bright studio with dark flags, so metal keeps its form on a white page.
+export function makeBrightEnv(renderer) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x5d6066);
+  const panel = (color, power, w, h, pos) => {
+    const c = new THREE.Color(color).multiplyScalar(power);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+    m.position.set(...pos); m.lookAt(0, 0, 0); scene.add(m);
+  };
+  panel(0xffffff, 5, 18, 8, [0, 14, 2]);
+  panel(0x050506, 1, 5, 24, [13, 1, 5]);
+  panel(0x050506, 1, 3, 24, [-11, 1, 9]);
+  panel(0x08090b, 1, 26, 3, [0, -7, 13]);
+  panel(0xffb27a, 9, 2.2, 22, [8, 1, 12]);
+  panel(0xdfe8ff, 7, 1.6, 22, [-14, 1, 3]);
+  panel(0xffffff, 4, 26, .9, [0, 4.5, 16]);
+  const pm = new THREE.PMREMGenerator(renderer);
+  const tex = pm.fromScene(scene, .012).texture;
+  pm.dispose();
+  return tex;
+}
+
 export const M = {
   titanium: () => new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .26, side: THREE.DoubleSide }),
   alu: () => new THREE.MeshStandardMaterial({ color: 0xd9dbde, metalness: 1, roughness: .34, side: THREE.DoubleSide }),
@@ -39,6 +61,18 @@ export const M = {
   carbon: () => new THREE.MeshStandardMaterial({ color: 0x25272b, metalness: .55, roughness: .5, side: THREE.DoubleSide }),
   anod: (c = 0x23304e) => new THREE.MeshPhysicalMaterial({ color: c, metalness: .9, roughness: .34, clearcoat: .5, clearcoatRoughness: .25, side: THREE.DoubleSide }),
 };
+
+Object.assign(M, {
+  primer: () => new THREE.MeshStandardMaterial({ color: 0x7f8a4a, metalness: .1, roughness: .6, side: THREE.DoubleSide }),
+  wrinkle: () => new THREE.MeshStandardMaterial({ color: 0x1b1c1e, metalness: .05, roughness: .7, side: THREE.DoubleSide }),
+  white: () => new THREE.MeshStandardMaterial({ color: 0xe8e8e4, metalness: 0, roughness: .5, side: THREE.DoubleSide }),
+  red: () => new THREE.MeshStandardMaterial({ color: 0xb3261e, metalness: 0, roughness: .4, side: THREE.DoubleSide }),
+  orange: () => new THREE.MeshStandardMaterial({ color: 0xe0601a, metalness: 0, roughness: .45, side: THREE.DoubleSide }),
+  oxygreen: () => new THREE.MeshStandardMaterial({ color: 0x2f6b4c, metalness: .1, roughness: .4, side: THREE.DoubleSide }),
+  braid: () => new THREE.MeshStandardMaterial({ color: 0xb4b6b8, metalness: 1, roughness: .5, side: THREE.DoubleSide }),
+});
+// Materials carry their factory's name so the Blender step can swap in a full shader.
+for (const k of Object.keys(M)) { const f = M[k]; M[k] = (...a) => { const m = f(...a); m.name = k; return m; }; }
 
 // Revolve a [radius, z] profile around the Z axis.
 export function lathe(profile, material, segments = 128, phiStart = 0, phiLength = Math.PI * 2) {

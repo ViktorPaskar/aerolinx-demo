@@ -1,0 +1,699 @@
+import * as THREE from 'three';
+import { makeStudioEnv, makeBrightEnv } from './kit.js';
+import { buildEngine, sampleCam, FOV } from './engine.js';
+import { createGlobe } from './globe.js';
+import { PARTS, FLEET, CATS, CONDS, HUBS, DOCS, MAKERS, CITIES, photo, stock, bestOffer } from './catalog.js';
+import { T } from './i18n.js';
+import { certEASA, certFAA, certFor } from './cert.js';
+import { createAdmin, sampleOrders, STATUSES } from './admin.js';
+import poster from '../assets/poster.webp';
+
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(Math.max(v, a), b);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PAGE = 24;
+const RATES = { AED: 1, USD: 3.6725, EUR: 3.98, SAR: .979 };
+
+/* ---------- Storage, safe in sandboxed viewers ---------- */
+const load = (k, d) => { try { const v = localStorage.getItem('sirb.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const store = (k, v) => { try { localStorage.setItem('sirb.' + k, JSON.stringify(v)); } catch (e) { /* viewer without storage */ } };
+
+const S = {
+  lang: location.hash === '#ar' ? 'ar' : load('lang', 'en'), cur: load('cur', 'AED'), theme: load('theme', 'dark'),
+  cart: load('cart', {}), saved: load('saved', []), recent: load('recent', []), ship: 'aog', sent: null,
+  f: { fleet: '', cats: [], conds: [], docs: [], hubs: [], makers: [], inStock: false, q: '', sort: 'rel' }, page: 1, view: load('view', 'grid'),
+  pd: null,
+};
+const adminState = { orders: load('orders', null) || sampleOrders(), edits: load('edits', {}), settings: load('settings', { aogDesk: true, usd: true, bulk: true, vat: 5 }) };
+for (const [pn, ed] of Object.entries(adminState.edits)) { const p = PARTS.find(x => x.pn === pn); if (p) ed.forEach(([q, a], i) => { if (p.offers[i]) { p.offers[i].qty = q; p.offers[i].aed = a; } }); }
+const saveAdmin = () => { store('orders', adminState.orders); store('edits', adminState.edits); store('settings', adminState.settings); };
+
+const t = k => T[S.lang][k];
+const vatRate = () => adminState.settings.vat / 100;
+const money = aed => {
+  const v = Math.round(aed / RATES[S.cur]).toLocaleString('en-US');
+  return S.cur === 'AED' ? t('aedF')(v) : S.cur === 'USD' ? '$' + v : S.cur === 'EUR' ? '€' + v : 'SAR ' + v;
+};
+const byPn = pn => PARTS.find(p => p.pn === pn);
+const fleetName = f => f === 'A320' ? t('A320') : f;
+const nameOf = p => p[S.lang];
+const icon = (id, s = 18) => `<svg width="${s}" height="${s}" aria-hidden="true"><use href="#${id}"/></svg>`;
+
+/* ---------- Page text ---------- */
+function renderStatic() {
+  const html = document.documentElement;
+  html.lang = S.lang; html.dir = S.lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(el => { if (typeof t(el.dataset.t) === 'string') el.textContent = t(el.dataset.t); });
+  $('palInput').placeholder = t('palPh');
+  $('catQ').placeholder = t('filterSearch'); $('catQ').setAttribute('aria-label', t('filterSearch'));
+  $('langBtn').textContent = t('langBtn');
+  $('curSel').value = S.cur; $('curSel').hidden = !adminState.settings.usd;
+  $('sortSel').innerHTML = [['rel', 'sRel'], ['low', 'sLow'], ['high', 'sHigh'], ['stock', 'sStock']].map(([v, k]) => `<option value="${v}"${S.f.sort === v ? ' selected' : ''}>${t(k)}</option>`).join('');
+  $('footShop').innerHTML = `<h3>${t('fShop')}</h3>` + CATS.map(c => `<a href="#parts" data-shop="${c}">${t(c)}</a>`).join('');
+  $('trust').innerHTML = t('trust').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
+  $('faqList').innerHTML = t('faq').map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('');
+  [$('heroBulk'), $('footBulk')].forEach(b => { b.hidden = !adminState.settings.bulk; });
+  renderTheme(); renderChapters(); renderSegs(); renderTiles(); renderSide(); renderGrid(); renderAog(); renderBento(); renderTrace(); renderCount();
+  if ($('drawer').open) renderDrawer();
+  if ($('palette').open) renderPalette();
+  if (S.pd) renderPdp();
+  observeReveals();
+}
+
+function renderTheme() {
+  document.documentElement.dataset.theme = S.theme;
+  document.querySelector('meta[name=theme-color]').content = S.theme === 'light' ? '#ffffff' : '#000000';
+  $('themeUse').setAttribute('href', S.theme === 'light' ? '#i-moon' : '#i-sun');
+  $('themeBtn').setAttribute('aria-label', S.theme === 'light' ? t('themeD') : t('themeL'));
+}
+
+function renderChapters() {
+  const ch = t('chapters');
+  $('chapters').innerHTML = ch.map((c, i) => `<div class="chapter" data-i="${i}">
+    <div class="bar">${ch.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</div>
+    <h3>${c.t}</h3><p>${c.d}</p>
+    <ul>${c.i.map(x => `<li>${x}</li>`).join('')}</ul>
+    <button class="solid jump" type="button" data-shop="engine">${t('jump')}</button>
+  </div>`).join('');
+  $('hotspots').innerHTML = ch.map(c => `<div class="hs" data-k="${c.k}"><button type="button" data-chapter="${c.k}">${c.t}</button><i></i></div>`).join('');
+}
+
+/* ---------- Aircraft slider ---------- */
+function moveThumb(el, instant) {
+  const th = el.querySelector('.thumb'), b = el.querySelector('[aria-pressed=true]');
+  if (!th || !b) return;
+  if (instant) th.style.transition = 'none';
+  th.style.width = b.offsetWidth + 'px'; th.style.transform = `translateX(${b.offsetLeft}px)`;
+  if (instant) { void th.offsetWidth; th.style.transition = ''; }
+  else if (el.scrollWidth > el.clientWidth) el.scrollTo({ left: b.offsetLeft - (el.clientWidth - b.offsetWidth) / 2, behavior: reduced ? 'auto' : 'smooth' });
+}
+function renderSegs() {
+  const items = [['', t('allA')], ...FLEET.map(f => [f, fleetName(f)])];
+  $('fleetSeg').innerHTML = '<span class="thumb"></span>' + items.map(([v, l]) => `<button type="button" data-fleet="${v}" aria-pressed="${v === S.f.fleet}">${l}</button>`).join('');
+  moveThumb($('fleetSeg'), true);
+}
+const refit = () => moveThumb($('fleetSeg'), true);
+document.fonts?.ready.then(refit);
+document.fonts?.addEventListener?.('loadingdone', refit);
+addEventListener('resize', refit);
+
+/* ---------- Categories, filters, grid ---------- */
+const CAT_PIC = { gear: 'brake', engine: 'blade', avionics: 'lru', electrical: 'generator', systems: 'valve', safety: 'oxygen' };
+function renderTiles() {
+  $('tiles').innerHTML = CATS.map(c => `<button class="ctile" type="button" data-shop="${c}" aria-pressed="${S.f.cats.length === 1 && S.f.cats[0] === c}">
+    <span class="im"><img src="assets/photos/${CAT_PIC[c]}-1.webp" alt="" loading="lazy"></span>
+    <span class="ct-tx"><strong>${t(c)}</strong><span>${t('catD')[c]}</span></span></button>`).join('');
+}
+function optGroup(title, key, items) {
+  return `<div class="fgroup"><h3>${title}</h3>${items.map(([v, l]) => `<label class="fopt"><input type="checkbox" data-f="${key}" value="${esc(v)}"${S.f[key].includes(v) ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div>`;
+}
+function renderSide() {
+  $('side').innerHTML = `<div class="fclose"><span>${t('fFilters')}</span><button class="ghost" type="button" id="sideClose">${t('close')}</button></div>
+    <div class="fgroup"><label class="fopt"><input type="checkbox" id="inStockF"${S.f.inStock ? ' checked' : ''}><span>${t('fStock')}</span></label></div>
+    ${optGroup(t('fCat'), 'cats', CATS.map(c => [c, t(c)]))}
+    ${optGroup(t('fCond'), 'conds', CONDS.map(c => [c, t(c)]))}
+    ${optGroup(t('fCert'), 'docs', DOCS.map(d => [d, d]))}
+    ${optGroup(t('fHub'), 'hubs', HUBS.map(h => [h, h]))}
+    ${optGroup(t('fMaker'), 'makers', MAKERS.map(m => [m, m]))}
+    <div class="side-actions"><button class="solid" type="button" id="sideApply"></button></div>`;
+  const a = $('sideApply'); if (a) a.textContent = t('fApply')(visible().length);
+}
+function visible() {
+  const f = S.f, q = f.q.trim().toLowerCase();
+  const list = PARTS.filter(p => {
+    if (f.fleet && !p.fits.includes(f.fleet)) return false;
+    if (f.cats.length && !f.cats.includes(p.cat)) return false;
+    if (f.conds.length && !p.offers.some(o => f.conds.includes(o.c))) return false;
+    if (f.docs.length && !p.offers.some(o => f.docs.includes(o.doc))) return false;
+    if (f.hubs.length && !p.offers.some(o => f.hubs.includes(o.from))) return false;
+    if (f.makers.length && !f.makers.includes(p.maker)) return false;
+    if (f.inStock && !stock(p)) return false;
+    if (q && !matches(p, q)) return false;
+    return true;
+  });
+  const price = p => bestOffer(p).aed;
+  if (f.sort === 'rel') list.sort((a, b) => a.rank - b.rank);
+  else if (f.sort === 'low') list.sort((a, b) => price(a) - price(b));
+  else if (f.sort === 'high') list.sort((a, b) => price(b) - price(a));
+  else if (f.sort === 'stock') list.sort((a, b) => stock(b) - stock(a));
+  return list;
+}
+const matches = (p, q) => p.pn.toLowerCase().includes(q) || p.alts.some(a => a.toLowerCase().includes(q)) || p.en.toLowerCase().includes(q) || p.ar.includes(q) || p.fits.some(x => x.toLowerCase().includes(q)) || t(p.cat).toLowerCase().includes(q) || p.maker.toLowerCase().includes(q);
+
+function inCart(pn) { return Object.keys(S.cart).some(k => k.startsWith(pn + '|')); }
+function card(p) {
+  const o = bestOffer(p), avail = stock(p), saved = S.saved.includes(p.pn), inq = inCart(p.pn);
+  return `<article class="card" data-card="${p.pn}">
+    <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn)}"></a>
+    <div class="c-photo"><img src="${photo(p)}" alt="" loading="lazy" decoding="async"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
+    <button type="button" class="heart${saved ? ' on' : ''}" data-save="${p.pn}" aria-label="${esc((saved ? t('saveR') : t('saveA')) + ' ' + p.pn)}" aria-pressed="${saved}">${icon('i-heart', 17)}</button>
+    <div class="c-b">
+      <div class="c-info">
+        <div class="pn" dir="ltr" style="text-align:start">${p.pn}</div>
+        <h3>${nameOf(p)}</h3>
+        <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi></p>
+        <p class="c-stock${avail ? '' : ' out'}"><i></i>${avail ? `${t('inStock')(avail)}, ${o.from}` : t('out')}</p>
+      </div>
+      <div class="c-buy">
+        <div class="price"><small>${p.offers.length > 1 ? t('from') : '&nbsp;'}</small>${money(o.aed)}</div>
+        <button type="button" class="addbtn${inq ? ' in' : ''}${avail ? '' : ' alt'}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : avail ? t('add') : t('request')) + ' ' + p.pn)}">${buyLabel(inq, avail)}</button>
+      </div>
+    </div>
+  </article>`;
+}
+const buyLabel = (inq, avail) => (inq ? icon('i-check', 15) : '') + `<span>${inq ? t('inq') : avail ? t('add') : t('request')}</span>`;
+function renderGrid() {
+  const v = visible(), shown = v.slice(0, S.page * PAGE), g = $('grid');
+  g.classList.toggle('as-list', S.view === 'list');
+  g.innerHTML = v.length ? shown.map(card).join('') : `<div class="empty">${t('emptyF')}<br><button class="solid" type="button" id="clearF2">${t('fClear')}</button></div>`;
+  $('count').textContent = t('results')(v.length);
+  const rest = v.length - shown.length;
+  $('moreW').innerHTML = rest > 0 ? `<button class="outline" type="button" id="moreBtn">${t('more')(Math.min(rest, PAGE))}</button>` : '';
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
+  const f = S.f, chips = [
+    ...f.cats.map(x => ['cats', x, t(x)]), ...f.conds.map(x => ['conds', x, t(x)]), ...f.docs.map(x => ['docs', x, x]),
+    ...f.hubs.map(x => ['hubs', x, x]), ...f.makers.map(x => ['makers', x, x]),
+  ];
+  if (f.inStock) chips.push(['inStock', '1', t('fStock')]);
+  $('activeF').innerHTML = chips.map(([k, val, l]) => `<button type="button" class="afil" data-rm="${k}" data-val="${esc(val)}">${l}<i aria-hidden="true">×</i></button>`).join('') + (chips.length > 1 ? `<button type="button" class="aclear" id="clearF">${t('fClear')}</button>` : '');
+  const a = $('sideApply'); if (a) a.textContent = t('fApply')(v.length);
+}
+function clearFilters() { Object.assign(S.f, { fleet: '', cats: [], conds: [], docs: [], hubs: [], makers: [], inStock: false, q: '' }); $('catQ').value = ''; S.page = 1; renderSegs(); renderSide(); renderTiles(); renderGrid(); }
+function shop(cat) {
+  S.f.cats = [cat]; S.page = 1; renderSide(); renderTiles(); renderGrid();
+  $('filters').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+}
+
+/* ---------- Product page ---------- */
+function openPdp(pn) {
+  const p = byPn(pn); if (!p) { closeOverlays(); return; }
+  const first = p.offers.findIndex(o => o.qty); const oi = first < 0 ? 0 : first;
+  S.pd = { pn, oi, type: 'out', qty: 1, view: p.view, tab: 'spec' };
+  S.recent = [pn, ...S.recent.filter(x => x !== pn)].slice(0, 9); store('recent', S.recent);
+  renderPdp();
+  const el = $('pdp'); el.hidden = false; el.scrollTop = 0;
+  document.documentElement.classList.add('locked');
+  el.focus({ preventScroll: true });
+}
+const exUnit = o => Math.round(o.aed * .42 / 50) * 50, coreUnit = o => Math.round(o.aed * .58 / 50) * 50;
+function renderPdp() {
+  const d = S.pd, p = byPn(d.pn), o = p.offers[d.oi], avail = o.qty > 0;
+  const unit = d.type === 'ex' && p.rotable ? exUnit(o) : o.aed;
+  const total = unit * d.qty, saved = S.saved.includes(p.pn);
+  const rows = [[t('sPn'), p.pn], [t('sAlt'), p.alts.join(', ')], [t('sMaker'), p.maker], [t('sAta'), p.ata], [t('sKg'), `${p.kg} kg`], [t('sSize'), `${p.size} cm`], [t('sHs'), p.hs], [t('sEccn'), p.eccn], [t('sWarr'), t('months')(p.warranty)]];
+  if (p.shelf) rows.push([t('sShelf'), t('shelfV')]);
+  if (p.hazmat) rows.push([t('sHaz'), t('yes')]);
+  const tabs = { spec: () => `<dl class="spec">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd><bdi>${b}</bdi></dd></div>`).join('')}</dl>`,
+    fits: () => `<div class="fitg">${p.fits.map(f => `<span><bdi>${fleetName(f)}</bdi></span>`).join('')}</div><p class="tnote">${t('fitsNote')}</p>`,
+    docs: () => `<div class="docg"><button class="certwrap" type="button" data-certopen="${p.pn}|${d.oi}" aria-label="${t('docOpen')}">${certFor(p, o)}</button><div class="docside"><p>${t('docIntro')(o.doc)}</p><button class="outline" type="button" data-certopen="${p.pn}|${d.oi}">${t('docOpen')}</button></div></div>`,
+    ship: () => `<div class="shiprows">${t('shipRows').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('')}</div>` };
+  const similar = PARTS.filter(x => x.cat === p.cat && x.pn !== p.pn && x.model !== p.model).slice(0, 4);
+  const recent = S.recent.filter(x => x !== p.pn).map(byPn).filter(Boolean).slice(0, 4);
+  $('pdp').innerHTML = `<div class="pd-top"><div class="wrap">
+      <button class="backb" type="button" id="pdBack"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>${t('pBack')}</button>
+      <span class="crumbs"><bdi>${t(p.cat)}</bdi></span>
+      <button class="solid small" type="button" data-opencart><span>${t('cart')}</span><b>${cartCount()}</b></button>
+    </div></div>
+    <div class="wrap">
+      <div class="pd-main">
+        <div class="gal">
+          <div class="gal-main"><img src="${photo(p, d.view)}" alt="${esc(nameOf(p))}"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
+          <div class="gal-th">${[1, 2, 3].map(v => `<button type="button" data-gal="${v}" aria-pressed="${v === d.view}" aria-label="${v}"><img src="${photo(p, v)}" alt="" loading="lazy"></button>`).join('')}</div>
+        </div>
+        <div class="pd-info">
+          <p class="eyebrow">ATA ${p.ata}, <bdi>${p.maker}</bdi></p>
+          <h1>${nameOf(p)}</h1>
+          <p class="pd-pn" dir="ltr" style="text-align:start"><strong>${p.pn}</strong> <span>/ ${p.alts[0]}</span></p>
+          <h2 class="pd-h">${t('pCond')}</h2>
+          <div class="opts">${p.offers.map((x, i) => `<button type="button" class="opt" data-opt="${i}" aria-pressed="${i === d.oi}"><strong>${t(x.c)} <bdi style="font-weight:400;color:var(--t2)">(${x.c})</bdi></strong><span class="pr">${money(x.aed)}</span><small>${t(x.c + 'd')}</small><small class="r">${x.qty ? `${t('inStock')(x.qty)}, ${x.from}` : t('out')}</small></button>`).join('')}</div>
+          ${p.rotable ? `<h2 class="pd-h">${t('pType')}</h2><div class="toggle"><button type="button" data-type="out" aria-pressed="${d.type === 'out'}">${t('pOut')}</button><button type="button" data-type="ex" aria-pressed="${d.type === 'ex'}">${t('pEx')}</button></div><p class="tnote">${d.type === 'ex' ? t('pExD')(money(coreUnit(o))) : t('pOutD')}</p>` : ''}
+          <div class="buybox">
+            <div class="bb-top">
+              <div class="bb-p">${money(total)}<small>${t('pSub')}, ${t('pIncl')(money(total * (1 + vatRate())))}</small></div>
+              <div class="stepper" role="group" aria-label="${t('pQty')}"><button type="button" data-pq="-1" aria-label="${t('less')}">−</button><span aria-live="polite">${d.qty}</span><button type="button" data-pq="1" aria-label="${t('moreQ')}">+</button></div>
+            </div>
+            <div class="bb-act">
+              <button class="solid" type="button" id="pdAdd">${avail ? t('add') : t('request')}</button>
+              <button class="outline${saved ? ' on' : ''}" type="button" data-save="${p.pn}" aria-pressed="${saved}" aria-label="${saved ? t('saveR') : t('saveA')}">${icon('i-heart', 19)}</button>
+            </div>
+            <p class="bb-ship${avail ? '' : ' out'}"><i></i><span>${avail ? t('pShip')(o.from) : t('pShipOut')}</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="pd-tabs">
+        <div class="tabsb" role="group">${[['spec', 'tSpec'], ['fits', 'tFits'], ['docs', 'tDocs'], ['ship', 'tShip']].map(([k, l]) => `<button type="button" data-tab="${k}" aria-pressed="${d.tab === k}">${t(l)}</button>`).join('')}</div>
+        <div class="tabc">${tabs[d.tab]()}</div>
+      </div>
+      ${similar.length ? `<section class="rowsec"><h2>${t('similar')}</h2><div class="minis">${similar.map(card).join('')}</div></section>` : ''}
+      ${recent.length ? `<section class="rowsec"><h2>${t('recent')}</h2><div class="minis">${recent.map(card).join('')}</div></section>` : ''}
+    </div>`;
+}
+function openCert(p, o) {
+  const m = $('modal'); m.classList.add('wide');
+  $('modalBody').innerHTML = `<div class="m-pad"><div class="m-h"><h2 style="color:#1d1d1f;font-size:20px">${o.doc}</h2><button class="ghost" type="button" data-mclose>${t('close')}</button></div>${certFor(p, o)}</div>`;
+  if (!m.open) m.showModal();
+}
+
+/* ---------- Home sections ---------- */
+function renderAog() {
+  $('ticket').innerHTML = `<div class="tk-head"><div><strong>${t('tkTitle')}</strong><span>${t('tkSub')}</span></div><span class="tk-live"><i></i>${t('tkLive')}</span></div>` +
+    t('tk').map(([a, b]) => `<div class="tk"><time dir="ltr">${a}</time><span class="dot"></span><span>${b}</span></div>`).join('');
+  $('routes').innerHTML = `<h3>${t('routesT')}</h3><ul>${CITIES.slice(0, 6).map(c => `<li><span>${c[S.lang]}</span><span dir="ltr">${c.t}</span></li>`).join('')}</ul>`;
+  animateTicket();
+}
+let tkTimer = 0;
+function animateTicket() {
+  clearInterval(tkTimer);
+  const rows = [...$('ticket').querySelectorAll('.tk')];
+  if (reduced) { rows.forEach(r => r.classList.add('on')); return; }
+  let i = 0;
+  const step = () => { rows.forEach((r, j) => r.classList.toggle('on', j <= i)); i = (i + 1) % rows.length; };
+  step(); tkTimer = setInterval(step, 1500);
+}
+function renderBento() {
+  const p = PARTS[0], sub = p.offers[0].aed, vat = sub * vatRate();
+  $('bento').innerHTML = `
+  <article class="tile t-inv reveal"><h3>${t('invT')}</h3><p>${t('invD')}</p>
+    <div class="viz"><div class="inv">
+      <div class="inv-h"><span>${t('invNo')}</span><span dir="ltr">${p.pn}</span></div>
+      <div class="inv-r"><span>${t('invSub')}</span><span dir="ltr">${money(sub)}</span></div>
+      <div class="inv-r"><span>${t('invVat')}</span><span dir="ltr">${money(vat)}</span></div>
+      <div class="inv-r tot"><span>${t('invTotal')}</span><span dir="ltr">${money(sub + vat)}</span></div>
+    </div></div></article>
+  <article class="tile t-lang reveal"><h3>${t('langT')}</h3><p>${t('langD')}</p>
+    <div class="viz bi" dir="ltr">
+      <div><span>Tax invoice</span><span>فاتورة ضريبية</span></div>
+      <div><span>Packing list</span><span>قائمة التعبئة</span></div>
+      <div><span>Quotation</span><span>عرض سعر</span></div>
+    </div></article>
+  <article class="tile t-air reveal"><h3>${t('airT')}</h3><p>${t('airD')}</p>
+    <div class="viz air">${t('airN').map(([a, b]) => `<div><strong dir="ltr">${a}</strong><span>${b}</span></div>`).join('')}</div></article>
+  <article class="tile t-pay reveal"><h3>${t('payT')}</h3><p>${t('payD')}</p>
+    <div class="viz chips">${t('pay').map(x => `<span>${x}</span>`).join('')}</div></article>
+  <article class="tile t-zone reveal"><h3>${t('zoneT')}</h3><p>${t('zoneD')}</p>
+    <ul class="viz zone">${t('zone').map(([a, b]) => `<li><span>${a}</span><span>${b}</span></li>`).join('')}</ul></article>`;
+}
+let certKind = 'easa';
+const certSample = () => { const p = PARTS[0], o = p.offers.find(x => x.c === 'OH') || p.offers[0]; return { p, o: { ...o, doc: certKind === 'faa' ? 'FAA 8130-3' : 'EASA Form 1' } }; };
+function renderTrace() {
+  const { p, o } = certSample();
+  $('certwrap').innerHTML = (certKind === 'faa' ? certFAA : certEASA)(p, o);
+  $('certwrap').setAttribute('aria-label', t('docOpen'));
+  document.querySelectorAll('[data-cert]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cert === certKind)));
+  $('life').innerHTML = t('life').map(([a, b, c]) => `<li><time>${a}</time><div><strong>${b}</strong><span>${c}</span></div></li>`).join('');
+}
+
+/* ---------- Cart ---------- */
+const cartCount = () => Object.values(S.cart).reduce((a, q) => a + q.qty, 0);
+function renderCount() {
+  $('cartCount').textContent = cartCount();
+  $('savedDot').hidden = !S.saved.length;
+}
+const saveCart = () => { store('cart', S.cart); renderCount(); };
+function lineOf(key) {
+  const [pn, oi, type] = key.split('|'), p = byPn(pn);
+  if (!p || oi === '') return { key, pn, p: null, unit: 0 };
+  const o = p.offers[+oi]; return { key, pn, p, o, type, unit: type === 'ex' ? exUnit(o) : o.aed };
+}
+function addToCart(pn, oi, type = 'out', qty = 1) {
+  const p = byPn(pn);
+  const key = p ? `${pn}|${oi ?? p.offers.indexOf(bestOffer(p))}|${type}` : `${pn}||`;
+  S.cart[key] = { qty: (S.cart[key]?.qty || 0) + qty };
+  saveCart();
+  document.querySelectorAll(`[data-add="${CSS.escape(pn)}"]`).forEach(b => { b.classList.add('in'); b.innerHTML = buyLabel(true, true); });
+}
+function totals() {
+  let sub = 0, hasUnknown = false;
+  for (const [k, q] of Object.entries(S.cart)) { const l = lineOf(k); if (l.p) sub += l.unit * q.qty; else hasUnknown = true; }
+  const ship = (t('cShipO').find(x => x[0] === S.ship) || [0, 0, 0])[2];
+  const vat = (sub + ship) * vatRate();
+  return { sub, ship, vat, total: sub + ship + vat, hasUnknown };
+}
+function renderDrawer() {
+  $('dTitle').textContent = t('dTitle');
+  const body = $('dBody'), keys = Object.keys(S.cart);
+  if (S.sent) {
+    body.innerHTML = `<div class="sent"><h3>${t('sentT')}</h3><p>${t('sentB')(S.sent)}</p><div class="row"><button class="solid" type="button" data-closedrawer>${t('back')}</button><button class="outline" type="button" data-track="${S.sent}">${t('trackIt')}</button></div></div>`;
+    return;
+  }
+  if (!keys.length) { body.innerHTML = `<div class="blank">${t('emptyQ')}<br><button class="solid" type="button" data-closedrawer>${t('browse')}</button></div>`; return; }
+  const lines = keys.map(k => {
+    const l = lineOf(k), q = S.cart[k].qty;
+    return `<div class="cline">${l.p ? `<img src="${photo(l.p)}" alt="">` : '<span class="ph"></span>'}
+      <div class="pnn" dir="ltr" style="text-align:start">${esc(l.pn)}</div><div class="amt">${l.p ? money(l.unit * q) : t('por')}</div>
+      <div class="nm">${l.p ? `${nameOf(l.p)}, ${t(l.o.c)}${l.type === 'ex' ? `, ${t('pEx')}` : ''}` : t('custom')}</div>
+      <div class="qty"><button type="button" data-less="${esc(k)}" aria-label="${t('less')} ${esc(l.pn)}">−</button><span>${q}</span><button type="button" data-moreq="${esc(k)}" aria-label="${t('moreQ')} ${esc(l.pn)}">+</button></div></div>`;
+  }).join('');
+  const x = totals();
+  body.innerHTML = lines +
+    `<div class="dform" style="margin-top:18px"><label>${t('cShip')}<select id="shipSel">${t('cShipO').map(([v, l, a]) => `<option value="${v}"${S.ship === v ? ' selected' : ''}>${l}${a ? `, ${money(a)}` : ''}</option>`).join('')}</select></label></div>` +
+    `<dl class="sum"><dt>${t('subtotal')}</dt><dd>${money(x.sub)}</dd><dt>${t('ship')}</dt><dd>${money(x.ship)}</dd><dt>${t('vat')}</dt><dd>${money(x.vat)}</dd><dt class="big">${t('total')}</dt><dd class="big">${money(x.total)}</dd></dl>` +
+    `<form class="dform" id="dForm"><label>${t('fCompany')}<input type="text" name="company" required autocomplete="organization"></label>
+     <label>${t('fContact')}<input type="text" name="contact" required></label>
+     <label>${t('fPo')} (${t('opt')})<input type="text" name="po"></label>
+     <label>${t('fTail')} (${t('opt')})<input type="text" name="tail"></label>
+     <label class="check"><input type="checkbox" name="aog"${S.aogFlag ? ' checked' : ''}>${t('fAog')}</label>
+     <button class="solid" type="submit">${t('send')}</button></form>`;
+}
+const openDrawer = () => { S.sent = null; closePalette(); renderDrawer(); if (!$('drawer').open) $('drawer').showModal(); };
+function placeOrder(form) {
+  const id = 'SA-' + (10483 + adminState.orders.filter(o => o.mine).length);
+  const data = new FormData(form), x = totals();
+  const lines = Object.keys(S.cart).map(k => { const l = lineOf(k); return { pn: l.pn, name: l.p ? l.p.en : 'Sourcing request', qty: S.cart[k].qty, aed: l.unit, c: l.o?.c || '' }; });
+  adminState.orders.unshift({ id, mine: true, company: data.get('company'), contact: data.get('contact'), po: data.get('po'), tail: data.get('tail'), status: STATUSES[0], lines, total: x.total, aog: !!data.get('aog'), when: 'Just now' });
+  saveAdmin(); S.cart = {}; S.aogFlag = false; S.sent = id; saveCart(); renderGrid(); renderDrawer(); admin.refresh();
+}
+
+/* ---------- Search palette ---------- */
+let palSel = 0, palRows = [];
+function palResults() {
+  const q = $('palInput').value.trim().toLowerCase();
+  if (!q) return (S.recent.length ? S.recent.map(byPn).filter(Boolean) : PARTS).slice(0, 6);
+  return PARTS.filter(p => matches(p, q)).slice(0, 30);
+}
+function renderPalette() {
+  palRows = palResults();
+  const q = $('palInput').value.trim();
+  palSel = clamp(palSel, 0, Math.max(palRows.length - 1, 0));
+  $('palList').innerHTML = (palRows.length ? palRows.map((p, i) => `<div class="pal-row${i === palSel ? ' sel' : ''}" role="option" aria-selected="${i === palSel}" data-pal="${i}">
+    <img src="${photo(p)}" alt="" loading="lazy"><div class="tx"><strong>${nameOf(p)}</strong><small dir="ltr">${p.pn}</small></div><span class="p">${money(bestOffer(p).aed)}</span></div>`).join('') :
+    `<div class="pal-empty">${esc(t('none')(q))}<br><button class="solid" type="button" data-source="${esc(q)}">${t('addSrc')}</button></div>`) +
+    (adminState.settings.bulk ? `<button type="button" class="pal-bulk" data-bulk>${t('bulkOpen')}</button>` : '');
+  $('palList').querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
+}
+const openPalette = () => { $('palInput').value = ''; palSel = 0; renderPalette(); if (!$('palette').open) $('palette').showModal(); $('palInput').focus(); };
+const closePalette = () => { if ($('palette').open) $('palette').close(); };
+const goProduct = pn => { closePalette(); location.hash = 'p-' + pn; };
+
+/* ---------- Modals: bulk list, tracking, saved ---------- */
+function showModal(html) { const m = $('modal'); m.classList.remove('wide'); $('modalBody').innerHTML = html; if (!m.open) m.showModal(); }
+const mHead = title => `<div class="m-h"><h2>${title}</h2><button class="ghost" type="button" data-mclose>${t('close')}</button></div>`;
+function openBulk(aog) {
+  closePalette();
+  S.aogFlag = !!aog;
+  showModal(`<div class="m-pad">${mHead(aog ? t('aogBtn') : t('bulkT'))}<p class="m-s">${t('bulkS')}</p>
+    <textarea class="m-ta" id="bulkTa" spellcheck="false" dir="ltr" aria-label="${t('bulkT')}" placeholder="${PARTS[0].pn}, 2&#10;${PARTS[40].pn}&#10;${PARTS[70].pn}, 8"></textarea>
+    <div class="m-act"><button class="solid" type="button" id="bulkGo">${t('bulkGo')}</button></div><div id="bulkRes"></div></div>`);
+  $('bulkTa').focus();
+}
+let bulkRows = [];
+function runBulk() {
+  bulkRows = $('bulkTa').value.split(/\n+/).map(l => l.trim()).filter(Boolean).map(l => {
+    const m = l.match(/^([A-Za-z0-9\-/]+)[\s,;x]*(\d+)?/);
+    if (!m) return null;
+    const pn = m[1].toUpperCase(), p = PARTS.find(x => x.pn === pn || x.alts.includes(pn));
+    return { pn: p ? p.pn : pn, qty: +m[2] || 1, p, ok: !!(p && stock(p)) };
+  }).filter(Boolean);
+  const found = bulkRows.filter(r => r.ok).length;
+  $('bulkRes').innerHTML = bulkRows.length ? `<div class="bres">${bulkRows.map(r => `<div><span dir="ltr">${r.qty} x ${esc(r.pn)}</span><em class="${r.ok ? 'ok' : ''}">${r.ok ? `${t('bulkYes')}, ${money(bestOffer(r.p).aed)}` : t('bulkNo')}</em></div>`).join('')}</div>
+    <p class="bsum">${t('bulkFound')(found)}, ${t('bulkMiss')(bulkRows.length - found)}</p><div class="m-act"><button class="solid" type="button" id="bulkAdd">${t('bulkAdd')}</button></div>` : '';
+}
+function openTrack(id) {
+  closeDrawerIfOpen();
+  showModal(`<div class="m-pad">${mHead(t('trackT'))}<p class="m-s">${t('trackS')}</p>
+    <form id="trackForm" class="m-in-row"><input class="m-in" id="trackIn" dir="ltr" value="${esc(id || '')}" placeholder="${t('trackPh')}" aria-label="${t('trackS')}"><button class="solid" type="submit">${t('trackGo')}</button></form><div id="trackRes"></div></div>`);
+  if (id) runTrack();
+}
+function runTrack() {
+  const v = $('trackIn').value.trim().toUpperCase(), o = adminState.orders.find(x => x.id === v);
+  if (!o) { $('trackRes').innerHTML = `<p class="m-s" style="margin-top:14px">${t('trackNone')}</p>`; return; }
+  const at = STATUSES.indexOf(o.status);
+  $('trackRes').innerHTML = `<ol class="tsteps">${t('trackSteps').map((s, i) => `<li class="${i <= at ? 'on' : ''}">${s}</li>`).join('')}</ol>`;
+}
+const closeDrawerIfOpen = () => { if ($('drawer').open) $('drawer').close(); };
+function openSaved() {
+  const list = S.saved.map(byPn).filter(Boolean);
+  showModal(`<div class="m-pad">${mHead(t('savedT'))}${list.length ? `<div class="saved-list">${list.map(p => `<a href="#p-${p.pn}" data-mclose><img src="${photo(p)}" alt=""><span><strong>${nameOf(p)}</strong><span dir="ltr">${p.pn}, ${money(bestOffer(p).aed)}</span></span></a>`).join('')}</div>` : `<p class="m-s">${t('savedE')}</p>`}</div>`);
+}
+function toggleSave(pn) {
+  S.saved = S.saved.includes(pn) ? S.saved.filter(x => x !== pn) : [pn, ...S.saved]; store('saved', S.saved); renderCount();
+  const on = S.saved.includes(pn);
+  document.querySelectorAll(`[data-save="${CSS.escape(pn)}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? t('saveR') : t('saveA')) + ' ' + pn); });
+}
+
+/* ---------- Routes ---------- */
+let scrollBeforeAdmin = 0;
+const admin = createAdmin({ root: $('adminRoot'), state: adminState, save: saveAdmin, onExit: () => leaveOverlay(), onChange: () => renderStatic() });
+function leaveOverlay() {
+  try { history.pushState(null, '', location.pathname + location.search); route(); } catch (e) { location.hash = 'store'; }
+}
+function closeOverlays() {
+  S.pd = null; $('pdp').hidden = true; $('pdp').innerHTML = '';
+  if (!$('adminRoot').hidden) { $('adminRoot').hidden = true; $('store').hidden = false; renderSegs(); scrollTo(0, scrollBeforeAdmin); }
+  document.documentElement.classList.remove('locked');
+}
+function route() {
+  const h = location.hash.slice(1);
+  if (h === 'admin') {
+    closeOverlays(); scrollBeforeAdmin = scrollY;
+    $('store').hidden = true; $('adminRoot').hidden = false; admin.render();
+    document.documentElement.classList.add('locked');
+  } else if (h.startsWith('p-')) {
+    if (!$('adminRoot').hidden) { $('adminRoot').hidden = true; $('store').hidden = false; }
+    openPdp(h.slice(2));
+  } else closeOverlays();
+}
+addEventListener('hashchange', route);
+
+/* ---------- Events ---------- */
+document.addEventListener('click', e => {
+  const shopEl = e.target.closest('[data-shop]');
+  if (shopEl) { e.preventDefault(); closeOverlays(); shop(shopEl.dataset.shop); return; }
+  if (e.target === $('drawer')) { $('drawer').close(); return; }
+  if (e.target === $('palette')) { closePalette(); return; }
+  if (e.target === $('modal')) { $('modal').close(); return; }
+  const mc = e.target.closest('[data-mclose]');
+  if (mc) { $('modal').close(); if (mc.tagName !== 'A') return; }
+  const row = e.target.closest('[data-pal]');
+  if (row) { goProduct(palRows[+row.dataset.pal].pn); return; }
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset;
+  if (d.add) {
+    const p = byPn(d.add);
+    if (inCart(d.add)) openDrawer(); else addToCart(d.add);
+    if (p && !stock(p)) openDrawer();
+  }
+  else if (d.save) toggleSave(d.save);
+  else if ('fleet' in d) {
+    S.f.fleet = d.fleet; S.page = 1;
+    $('fleetSeg').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.fleet === d.fleet)));
+    moveThumb($('fleetSeg')); renderGrid();
+  }
+  else if (d.rm) {
+    if (d.rm === 'inStock') S.f.inStock = false; else S.f[d.rm] = S.f[d.rm].filter(x => x !== d.val);
+    S.page = 1; renderSide(); renderTiles(); renderGrid();
+  }
+  else if (b.id === 'clearF' || b.id === 'clearF2') clearFilters();
+  else if (b.id === 'moreBtn') { S.page++; renderGrid(); }
+  else if (d.view) { S.view = d.view; store('view', S.view); renderGrid(); }
+  else if (b.id === 'mFilters') $('side').classList.add('open');
+  else if (b.id === 'sideClose' || b.id === 'sideApply') $('side').classList.remove('open');
+  else if (d.moreq) { S.cart[d.moreq].qty++; saveCart(); renderDrawer(); }
+  else if (d.less) { if (--S.cart[d.less].qty < 1) { delete S.cart[d.less]; renderGrid(); } saveCart(); renderDrawer(); }
+  else if ('opencart' in d) { closeOverlaysKeepPd(); openDrawer(); }
+  else if ('closedrawer' in d) { S.sent = null; $('drawer').close(); leaveOverlayIfPd(); $('parts').scrollIntoView(); }
+  else if ('aog' in d) { openBulk(true); }
+  else if ('bulk' in d) openBulk(false);
+  else if (d.source) { closePalette(); addToCart(d.source.toUpperCase()); openDrawer(); }
+  else if (d.chapter) jumpToChapter(d.chapter);
+  else if (d.track) openTrack(d.track);
+  else if (d.opt !== undefined) { S.pd.oi = +d.opt; S.pd.qty = 1; renderPdpKeep(); }
+  else if (d.type) { S.pd.type = d.type; renderPdpKeep(); }
+  else if (d.pq) { S.pd.qty = Math.max(1, S.pd.qty + +d.pq); renderPdpKeep(); }
+  else if (d.gal) { S.pd.view = +d.gal; renderPdpKeep(); }
+  else if (d.tab) { S.pd.tab = d.tab; renderPdpKeep(); }
+  else if (d.certopen) { const [pn, i] = d.certopen.split('|'), p = byPn(pn); openCert(p, p.offers[+i]); }
+  else if (d.cert) { certKind = d.cert; renderTrace(); }
+  else if (b.id === 'certwrap') { const { p, o } = certSample(); openCert(p, o); }
+  else if (b.id === 'pdAdd') { const x = S.pd, p = byPn(x.pn); addToCart(p.pn, x.oi, p.rotable ? x.type : 'out', x.qty); closeOverlaysKeepPd(); openDrawer(); }
+  else if (b.id === 'pdBack') { history.length > 1 ? history.back() : leaveOverlay(); }
+  else if (b.id === 'bulkGo') runBulk();
+  else if (b.id === 'bulkAdd') { bulkRows.forEach(r => addToCart(r.pn, undefined, 'out', r.qty)); $('modal').close(); renderGrid(); openDrawer(); }
+});
+const closeOverlaysKeepPd = () => {};
+const leaveOverlayIfPd = () => { if (S.pd) leaveOverlay(); };
+function renderPdpKeep() { const el = $('pdp'), top = el.scrollTop; renderPdp(); el.scrollTop = top; }
+document.addEventListener('change', e => {
+  const el = e.target, d = el.dataset;
+  if (d.f) { const a = S.f[d.f]; S.f[d.f] = el.checked ? [...a, el.value] : a.filter(x => x !== el.value); S.page = 1; renderTiles(); renderGrid(); }
+  else if (el.id === 'inStockF') { S.f.inStock = el.checked; S.page = 1; renderGrid(); }
+  else if (el.id === 'sortSel') { S.f.sort = el.value; S.page = 1; renderGrid(); }
+  else if (el.id === 'shipSel') { S.ship = el.value; renderDrawer(); }
+  else if (el.id === 'curSel') { S.cur = el.value; store('cur', S.cur); renderStatic(); }
+});
+$('catQ').addEventListener('input', e => { S.f.q = e.target.value; S.page = 1; renderGrid(); });
+$('cartBtn').onclick = openDrawer;
+$('dClose').onclick = () => $('drawer').close();
+$('heroSearch').onclick = openPalette; $('navSearch').onclick = openPalette; $('endSearch').onclick = openPalette; $('palClose').onclick = closePalette;
+$('heroBulk').onclick = () => openBulk(false); $('footBulk').onclick = () => openBulk(false);
+$('footTrack').onclick = () => openTrack(); $('savedBtn').onclick = openSaved;
+document.addEventListener('submit', e => {
+  if (e.target.id === 'dForm') { e.preventDefault(); placeOrder(e.target); }
+  else if (e.target.id === 'trackForm') { e.preventDefault(); runTrack(); }
+});
+$('langBtn').onclick = () => {
+  S.lang = S.lang === 'en' ? 'ar' : 'en'; store('lang', S.lang);
+  if (!S.pd) { try { history.replaceState(null, '', S.lang === 'ar' ? '#ar' : location.pathname + location.search); } catch (err) { /* sandboxed viewers */ } }
+  renderStatic(); renderGlobeLabels(); sizeStory();
+};
+$('themeBtn').onclick = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; store('theme', S.theme); renderTheme(); engineTheme?.(); globe?.redraw(); };
+$('palInput').addEventListener('input', () => { palSel = 0; renderPalette(); });
+$('palInput').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { palSel = Math.min(palSel + 1, palRows.length - 1); renderPalette(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { palSel = Math.max(palSel - 1, 0); renderPalette(); e.preventDefault(); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (palRows[palSel]) goProduct(palRows[palSel].pn);
+    else if ($('palInput').value.trim()) { closePalette(); addToCart($('palInput').value.trim().toUpperCase()); openDrawer(); }
+  }
+});
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('palette').open ? closePalette() : openPalette(); }
+  else if (e.key === 'Escape' && S.pd && !document.querySelector('dialog[open]')) leaveOverlay();
+});
+
+let revealIO;
+function observeReveals() {
+  if (!revealIO) revealIO = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add('in'); revealIO.unobserve(x.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal:not(.in)').forEach(el => revealIO.observe(el));
+}
+
+/* ---------- Globe ---------- */
+const globeCities = CITIES.map(c => ({ ...c }));
+function renderGlobeLabels() { globeCities.forEach(c => { c.label = c[S.lang]; }); globe?.redraw(); }
+let globe;
+
+/* ---------- Scroll story ---------- */
+const story = $('story');
+let storyTop = 0, storyLen = 1, engineTheme = null;
+function sizeStory() { storyTop = story.offsetTop; storyLen = Math.max(story.offsetHeight - innerHeight, 1); }
+const chapterP = { fan: .58, hpc: .68, combustor: .78, lpt: .88 };
+function jumpToChapter(k) { scrollTo({ top: storyTop + chapterP[k] * storyLen, behavior: 'smooth' }); }
+const band = (p, a, b, c, d) => p <= a || p >= d ? 0 : p < b ? (p - a) / (b - a) : p > c ? 1 - (p - c) / (d - c) : 1;
+
+function applyOverlays(p) {
+  const heroO = clamp(1 - p / .05), hero = $('hero');
+  hero.style.opacity = heroO; hero.style.visibility = heroO < .01 ? 'hidden' : 'visible';
+  hero.style.transform = `translateY(${-p * 900}px) scale(${1 - p * .6})`;
+  $('halo').style.transform = `translateY(${p * 700}px)`;
+  const b1 = band(p, .15, .2, .285, .33), b2 = band(p, .405, .45, .51, .54);
+  $('beat1').style.opacity = b1; $('beat1').style.transform = `translateY(${(1 - b1) * 18}px)`;
+  $('beat2').style.opacity = b2; $('beat2').style.transform = `translateY(${(1 - b2) * 18}px)`;
+  const ranges = [[.545, .57, .615, .64], [.645, .67, .715, .74], [.745, .77, .815, .84], [.845, .87, .925, .955]];
+  let mx = b1;
+  document.querySelectorAll('.chapter').forEach((el, i) => {
+    const o = band(p, ...ranges[i]); mx = Math.max(mx, o);
+    el.style.opacity = o; el.style.transform = `translateY(${(1 - o) * 20}px)`;
+    el.style.visibility = o < .01 ? 'hidden' : 'visible';
+    el.style.pointerEvents = o > .9 ? 'auto' : 'none';
+  });
+  $('scrim').style.opacity = mx;
+  $('hotspots').style.opacity = band(p, .445, .47, .515, .54);
+  $('hotspots').style.visibility = p > .44 && p < .545 ? 'visible' : 'hidden';
+  $('fab').classList.toggle('off', p > .02 && p < .99);
+}
+
+function setupEngine() {
+  const canvas = $('gl');
+  const small = innerWidth < 820;
+  const lite = small || (navigator.hardwareConcurrency || 8) <= 4;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0;
+  const scene = new THREE.Scene();
+  const envs = { dark: makeStudioEnv(renderer), light: makeBrightEnv(renderer) };
+  engineTheme = () => { scene.environment = envs[S.theme]; };
+  engineTheme();
+  const { engine, modules, rotor, sync } = buildEngine({ lite });
+  scene.add(engine);
+  const cam = new THREE.PerspectiveCamera(FOV, 1, .05, 80);
+
+  let W = 0, H = 0, maxDpr = Math.min(devicePixelRatio || 1, lite ? 1.5 : 2);
+  const resize = () => {
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    if (!W) return;
+    renderer.setPixelRatio(maxDpr);
+    renderer.setSize(W, H, false);
+    cam.aspect = W / H; cam.updateProjectionMatrix();
+    sizeStory();
+  };
+  resize(); addEventListener('resize', resize);
+
+  let px = 0, py = 0, tx = 0, ty = 0;
+  addEventListener('pointermove', e => { tx = e.clientX / innerWidth - .5; ty = e.clientY / innerHeight - .5; }, { passive: true });
+  let pS = clamp((scrollY - storyTop) / storyLen);
+  const start = performance.now();
+  let spin = 0, prev = start, active = true, slow = 0;
+  const v = new THREE.Vector3(), fw = new THREE.Vector3();
+  const zoomFor = (aspect, pv) => {
+    const base = aspect < 1.25 ? Math.min(1.25 / aspect, 2.1) : 1;
+    return pv < .1 ? 1 + (base - 1) * (.72 + pv * 2.8) : base;
+  };
+  const frame = now => {
+    requestAnimationFrame(frame);
+    if (!active || S.pd || !$('adminRoot').hidden) { prev = now; return; }
+    const real = (now - prev) / 1000, dt = Math.min(real, .05); prev = now;
+    const target = clamp((scrollY - storyTop) / storyLen);
+    pS += (target - pS) * (1 - Math.exp(-Math.min(real, .6) * 7));
+    const p = pS;
+    px += (tx - px) * (1 - Math.exp(-dt * 3)); py += (ty - py) * (1 - Math.exp(-dt * 3));
+    const s = sampleCam(p), aspect = W / H, zoom = zoomFor(aspect, p), pos = s.pos.slice(), tgt = s.tgt.slice();
+    for (let i = 0; i < 3; i++) pos[i] = tgt[i] + (pos[i] - tgt[i]) * zoom;
+    if (s.sh) {
+      if (aspect < 1) { tgt[1] += s.my * s.sh * .86; pos[1] += s.my * s.sh * .86; }
+      else {
+        fw.set(tgt[0] - pos[0], 0, tgt[2] - pos[2]).normalize();
+        const side = S.lang === 'ar' ? -1 : 1, rx = -fw.z, rz = fw.x, d = s.sh * side;
+        tgt[0] -= rx * d; tgt[2] -= rz * d; pos[0] -= rx * d; pos[2] -= rz * d;
+      }
+    }
+    const par = 1 - clamp(p / .1) * .75;
+    cam.position.set(pos[0] + px * .55 * par, pos[1] - py * .32 * par, pos[2]);
+    cam.lookAt(tgt[0], tgt[1], tgt[2]);
+    sync(s.explode, s.open, s.focus);
+    const el = (now - start) / 1000, k = clamp(el / 4.2);
+    const speed = (Math.sin(Math.min(k * 1.5, 1) * Math.PI / 2) * 2.1) * (1 - k * k * .72) + .08 + p * .25;
+    spin += speed * dt;
+    rotor.rotation.z = spin;
+    for (const n of ['lpc', 'hpc', 'hpt', 'lpt']) modules[n].rotation.z = spin * 1.4;
+    renderer.toneMappingExposure = clamp(el / 2.2) * (S.theme === 'light' ? .92 : 1.08);
+    canvas.style.transition = el > 2 ? 'none' : '';
+    canvas.style.opacity = p > .95 ? clamp((1 - p) / .05) : '';
+    renderer.render(scene, cam);
+    applyOverlays(p);
+    if (el > 3) {
+      slow = Math.max(slow + (real > .03 ? 1 : -.25), 0);
+      if (slow > 45 && maxDpr > 1) { maxDpr = Math.max(maxDpr - .5, 1); slow = 0; resize(); }
+    }
+    if (p > .44 && p < .55) {
+      document.querySelectorAll('.hs').forEach(h => {
+        const m = modules[h.dataset.k], a = m.userData.anchor;
+        v.set(0, a.y, a.z + m.position.z); engine.localToWorld(v); v.project(cam);
+        const x = (v.x * .5 + .5) * W, y = (-v.y * .5 + .5) * H;
+        h.style.setProperty('--len', '18px');
+        h.style.transform = `translate(${x}px,${y - 52}px) translate(-50%,0)`;
+      });
+    }
+  };
+  new IntersectionObserver(e => { active = e[0].isIntersecting; }, { rootMargin: '10%' }).observe($('stage'));
+  requestAnimationFrame(frame);
+  canvas.classList.add('on');
+}
+
+/* ---------- Boot ---------- */
+$('poster').src = poster; $('endImg').src = poster;
+document.querySelector('kbd').textContent = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘K' : 'Ctrl K';
+renderStatic();
+function hasWebGL() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
+if (reduced || !hasWebGL()) document.documentElement.classList.add('static');
+else { try { setupEngine(); } catch (err) { console.error(err); document.documentElement.classList.add('static'); } }
+sizeStory();
+globeCities.forEach(c => { c.label = c[S.lang]; });
+globe = createGlobe($('globe'), () => globeCities, reduced, () => S.theme === 'light');
+$('halo').style.opacity = 1;
+requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('pre')));
+const onScroll = () => $('nav').classList.toggle('solidnav', scrollY > 40 && (scrollY > storyTop + storyLen - 10 || document.documentElement.classList.contains('static')));
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+route();

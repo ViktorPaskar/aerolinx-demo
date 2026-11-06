@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" class="pre">
+<html lang="en" dir="ltr" class="pre" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,18 +8,23 @@
 <meta name="description" content="Buy certified aircraft spare parts online. Engine, landing gear, avionics and hydraulics, in stock in Dubai and priced in dirhams.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
 <style>/*{{CSS}}*/</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-search" viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.4 13.4 17 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.8 3.8 7.2-8.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-  <symbol id="i-bag" viewBox="0 0 20 20"><path d="M4.5 7h11l-.8 9.2a1 1 0 0 1-1 .8H6.3a1 1 0 0 1-1-.8zM7.2 7V5.6a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 20 20"><path d="M10 16.5S3 12.4 3 7.6A3.6 3.6 0 0 1 10 6.4a3.6 3.6 0 0 1 7 1.2c0 4.8-7 8.9-7 8.9z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 20 20"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 20 20"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3zM11 11h6v6h-6z" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 20 20"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3A2.5 2.5 0 0 1 3 11.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
   <symbol id="i-logo" viewBox="0 0 28 22"><path d="M14 1.5 19.4 10 14 7.6 8.6 10zM5.4 11.5l5.4 8.5-5.4-2.4L0 20zM22.6 11.5 28 20l-5.4-2.4L17.2 20z" fill="currentColor"/></symbol>
 </svg>
 
+<div id="store">
 <header class="nav" id="nav">
   <div class="nav-in">
     <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB Aero</span></a>
@@ -28,12 +33,15 @@
       <a href="#aog" data-t="navAog"></a>
       <a href="#gulf" data-t="navGulf"></a>
       <a href="#trace" data-t="navTrace"></a>
+      <a href="#faq" data-t="navFaq"></a>
     </nav>
     <div class="tools">
       <button class="ghost icon" id="navSearch" type="button"><svg width="17" height="17" aria-hidden="true"><use href="#i-search"/></svg><span class="sr" data-t="search"></span></button>
-      <button class="ghost" id="curBtn" type="button"></button>
+      <button class="ghost icon" id="savedBtn" type="button"><svg width="17" height="17" aria-hidden="true"><use href="#i-heart"/></svg><span class="sr" data-t="saved"></span><i class="dotc" id="savedDot" hidden></i></button>
+      <button class="ghost icon" id="themeBtn" type="button"><svg width="17" height="17" aria-hidden="true"><use id="themeUse" href="#i-sun"/></svg></button>
+      <select class="ghost sel" id="curSel" aria-label="Currency"><option>AED</option><option>USD</option><option>EUR</option><option>SAR</option></select>
       <button class="ghost" id="langBtn" type="button"></button>
-      <button class="solid small" id="quoteBtn" type="button"><span data-t="quote"></span><b id="qCount" aria-live="polite">0</b></button>
+      <button class="solid small" id="cartBtn" type="button"><span data-t="cart"></span><b id="cartCount" aria-live="polite">0</b></button>
     </div>
   </div>
 </header>
@@ -44,7 +52,6 @@
       <div class="halo" id="halo" aria-hidden="true"></div>
       <img class="poster" id="poster" alt="" aria-hidden="true">
       <canvas class="gl" id="gl" aria-hidden="true"></canvas>
-
       <div class="scrim" id="scrim" aria-hidden="true"></div>
       <div class="hero" id="hero">
         <h1 data-t="h1" class="breaks"></h1>
@@ -54,15 +61,16 @@
           <span data-t="heroSearch"></span>
           <kbd>⌘K</kbd>
         </button>
-        <p class="status"><i></i><span id="clock"></span></p>
+        <button class="textbtn" id="heroBulk" type="button" data-t="bulkOpen"></button>
       </div>
-
       <div class="beat beat1" id="beat1"><h2 class="d2 breaks" data-t="s1"></h2></div>
       <div class="beat beat2" id="beat2"><h2 class="d2" data-t="s2"></h2><p data-t="s2b"></p></div>
       <div class="hotspots" id="hotspots"></div>
       <div id="chapters"></div>
     </div>
   </section>
+
+  <section class="trustbar"><div class="wrap trust" id="trust"></div></section>
 
   <section class="sect catalogue" id="parts">
     <div class="wrap">
@@ -71,13 +79,22 @@
         <p class="sub" data-t="catS"></p>
       </header>
       <div class="tiles reveal" id="tiles"></div>
-      <h3 class="listhead reveal" id="filters" data-t="listT"></h3>
-      <div class="filterbar reveal">
-        <div class="seg" id="fleetSeg" role="group"></div>
-        <div class="seg seg-sub" id="catSeg" role="group"></div>
+      <div class="seg-row" id="filters"><div class="seg" id="fleetSeg" role="group"></div></div>
+      <div class="shop">
+        <aside class="side" id="side" aria-label="Filters"></aside>
+        <div class="shop-main">
+          <div class="bar-top">
+            <button class="ghost line mfilters" id="mFilters" type="button" data-t="fFilters"></button>
+            <div class="in-search"><svg width="16" height="16" aria-hidden="true"><use href="#i-search"/></svg><input id="catQ" type="search" autocomplete="off"></div>
+            <p class="count" id="count" aria-live="polite"></p>
+            <select class="ghost line sel" id="sortSel" aria-label="Sort"></select>
+            <div class="viewt" role="group"><button type="button" class="ghost icon" data-view="grid"><svg width="17" height="17" aria-hidden="true"><use href="#i-grid"/></svg><span class="sr" data-t="grid"></span></button><button type="button" class="ghost icon" data-view="list"><svg width="17" height="17" aria-hidden="true"><use href="#i-list"/></svg><span class="sr" data-t="list"></span></button></div>
+          </div>
+          <div class="active" id="activeF"></div>
+          <div class="grid" id="grid"></div>
+          <div class="moreW" id="moreW"></div>
+        </div>
       </div>
-      <p class="found" id="found" aria-live="polite"></p>
-      <div class="grid" id="grid"></div>
     </div>
   </section>
 
@@ -93,7 +110,7 @@
         <aside class="glass routes reveal" id="routes"></aside>
       </div>
     </div>
-    <div class="aog-cta"><button class="solid" type="button" data-open-quote data-t="aogBtn"></button></div>
+    <div class="aog-cta"><button class="solid" type="button" data-aog data-t="aogBtn"></button></div>
   </section>
 
   <section class="sect gulf" id="gulf">
@@ -110,9 +127,19 @@
         <p class="sub" data-t="traceS"></p>
       </header>
       <div class="trace-grid">
-        <div class="cert reveal" id="cert" dir="ltr"></div>
+        <div class="reveal">
+          <div class="certtabs" role="group"><button type="button" data-cert="easa" aria-pressed="true">EASA Form 1</button><button type="button" data-cert="faa" aria-pressed="false">FAA 8130-3</button></div>
+          <button class="certwrap" id="certwrap" type="button"></button>
+        </div>
         <ol class="life reveal" id="life"></ol>
       </div>
+    </div>
+  </section>
+
+  <section class="sect faqs" id="faq">
+    <div class="wrap faq-grid">
+      <h2 class="d1 reveal" data-t="faqT"></h2>
+      <div class="faq reveal" id="faqList"></div>
     </div>
   </section>
 
@@ -133,13 +160,20 @@
         <p class="foot-about" data-t="fAbout"></p><p data-t="fCo"></p>
       </div>
       <div class="foot-cols">
-        <div><h3 data-t="fShop"></h3><a href="#parts" data-shop="gear" data-t="gear"></a><a href="#parts" data-shop="engine" data-t="engine"></a><a href="#parts" data-shop="avionics" data-t="avionics"></a><a href="#parts" data-shop="systems" data-t="systems"></a></div>
-        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#gulf" data-t="navGulf"></a><a href="#trace" data-t="navTrace"></a></div>
+        <div id="footShop"></div>
+        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#gulf" data-t="navGulf"></a><a href="#trace" data-t="navTrace"></a><a href="#faq" data-t="navFaq"></a><button type="button" class="flink" id="footTrack" data-t="track"></button></div>
+        <div><h3>SIRB</h3><button type="button" class="flink" id="footBulk" data-t="bulkOpen"></button><a href="#admin" data-t="fAdmin"></a></div>
       </div>
     </div>
-    <div class="foot-end"><span>© 2026 SIRB Aero</span><span data-t="demo"></span></div>
+    <div class="foot-end"><span>© 2026 SIRB Aero</span></div>
   </div>
 </footer>
+
+<button class="fab" id="fab" type="button" data-aog><svg width="18" height="18" aria-hidden="true"><use href="#i-chat"/></svg><span data-t="aogFab"></span></button>
+</div>
+
+<div class="pdp" id="pdp" tabindex="-1" hidden></div>
+<div id="adminRoot" hidden></div>
 
 <dialog class="palette" id="palette" aria-label="Search">
   <div class="pal-in">
@@ -154,10 +188,12 @@
 
 <dialog class="drawer" id="drawer" aria-labelledby="dTitle">
   <div class="d-in">
-    <div class="d-head"><h2 id="dTitle" data-t="dTitle"></h2><button class="ghost" type="button" id="dClose" data-t="close"></button></div>
+    <div class="d-head"><h2 id="dTitle"></h2><button class="ghost" type="button" id="dClose" data-t="close"></button></div>
     <div class="d-body" id="dBody"></div>
   </div>
 </dialog>
+
+<dialog class="modal" id="modal"><div id="modalBody"></div></dialog>
 <script>/*{{JS}}*/</script>
 </body>
 </html>

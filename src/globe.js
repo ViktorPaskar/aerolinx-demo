@@ -4,7 +4,7 @@ import DOTS from './dots.json';
 const RAD = Math.PI / 180;
 const DXB = { lat: 25.25, lon: 55.36 };
 
-export function createGlobe(canvas, getCities, reduced) {
+export function createGlobe(canvas, getCities, reduced, isLight = () => false) {
   const ctx = canvas.getContext('2d');
   const n = DOTS.length / 2;
   const vec = new Float32Array(n * 3);
@@ -37,7 +37,7 @@ export function createGlobe(canvas, getCities, reduced) {
 
   const home = toVec(DXB.lat, DXB.lon);
   const draw = time => {
-    const T = time / 1000;
+    const T = time / 1000, L = isLight();
     const lon0 = (DXB.lon + (reduced ? 0 : Math.sin(T * .09) * 11)) * RAD;
     const lat0 = 1 * RAD;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -45,10 +45,10 @@ export function createGlobe(canvas, getCities, reduced) {
 
     // Atmosphere
     const g = ctx.createRadialGradient(cx, cy, R * .92, cx, cy, R * 1.14);
-    g.addColorStop(0, 'rgba(255,176,104,.16)'); g.addColorStop(.42, 'rgba(255,150,90,.05)'); g.addColorStop(1, 'rgba(255,150,90,0)');
+    g.addColorStop(0, L ? 'rgba(255,150,80,.22)' : 'rgba(255,176,104,.16)'); g.addColorStop(.42, 'rgba(255,150,90,.05)'); g.addColorStop(1, 'rgba(255,150,90,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.14, 0, Math.PI * 2); ctx.fill();
     const body = ctx.createRadialGradient(cx, cy - R * .5, R * .1, cx, cy, R);
-    body.addColorStop(0, '#16161a'); body.addColorStop(1, '#040405');
+    body.addColorStop(0, L ? '#ffffff' : '#16161a'); body.addColorStop(1, L ? '#ececf0' : '#040405');
     ctx.fillStyle = body; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
 
     // Land dots
@@ -59,7 +59,7 @@ export function createGlobe(canvas, getCities, reduced) {
       const x1 = vx * cl - vz * sl, z1 = vx * sl + vz * cl;
       const y2 = vy * ct - z1 * st, z2 = vy * st + z1 * ct;
       if (z2 < .04) continue;
-      ctx.fillStyle = `rgba(255,255,255,${(.14 + z2 * .5).toFixed(2)})`;
+      ctx.fillStyle = `${L ? 'rgba(20,22,28,' : 'rgba(255,255,255,'}${((L ? .1 : .14) + z2 * (L ? .4 : .5)).toFixed(2)})`;
       ctx.fillRect(cx + x1 * R, cy - y2 * R, size, size);
     }
 
@@ -75,23 +75,23 @@ export function createGlobe(canvas, getCities, reduced) {
         if (q.z < -.05) { started = false; continue; }
         started ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); started = true;
       }
-      ctx.strokeStyle = 'rgba(255,190,130,.34)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = L ? 'rgba(200,100,30,.55)' : 'rgba(255,190,130,.34)'; ctx.lineWidth = 1; ctx.stroke();
       // Pulse travelling out along the route
       const k = reduced ? .6 : ((T * .16 + i * .137) % 1);
       const head = P(arc(home, end, k));
       if (head.z > 0) {
         const fade = Math.sin(Math.PI * k);
-        ctx.fillStyle = `rgba(255,216,170,${fade.toFixed(2)})`;
+        ctx.fillStyle = `${L ? 'rgba(200,90,20,' : 'rgba(255,216,170,'}${fade.toFixed(2)})`;
         ctx.beginPath(); ctx.arc(head.x, head.y, 2.1, 0, Math.PI * 2); ctx.fill();
       }
       const e = P(end);
       if (e.z > .05) {
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e.x, e.y, 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = L ? '#1d1d1f' : '#fff'; ctx.beginPath(); ctx.arc(e.x, e.y, 2.4, 0, Math.PI * 2); ctx.fill();
         if (W > 620 || i % 2 === 0) {
           const right = e.x >= cx;
           ctx.font = `500 ${W > 620 ? 13 : 11}px "Inter","IBM Plex Sans Arabic",system-ui,sans-serif`;
           ctx.textAlign = right ? 'left' : 'right'; ctx.textBaseline = 'middle'; ctx.direction = 'ltr';
-          ctx.fillStyle = 'rgba(255,255,255,.82)';
+          ctx.fillStyle = L ? 'rgba(20,22,28,.86)' : 'rgba(255,255,255,.82)';
           ctx.fillText(c.label, e.x + (right ? 9 : -9), e.y + (c.dy || 0));
         }
       }
@@ -100,7 +100,7 @@ export function createGlobe(canvas, getCities, reduced) {
     const pulse = reduced ? .5 : (T * .5) % 1;
     ctx.strokeStyle = `rgba(255,190,130,${(1 - pulse) * .8})`; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.arc(hp.x, hp.y, 5 + pulse * 18, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#FFC48A'; ctx.beginPath(); ctx.arc(hp.x, hp.y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = L ? '#d97a2b' : '#FFC48A'; ctx.beginPath(); ctx.arc(hp.x, hp.y, 4, 0, Math.PI * 2); ctx.fill();
   };
 
   const loop = t => {

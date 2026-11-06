@@ -1,6 +1,7 @@
 // Procedural studio models for the catalogue. Rendered once to WebP at build time.
 import * as THREE from 'three';
 import { M, lathe, smooth, bladeGeometry, polar, tube, rbox } from './kit.js';
+import { plate, MODELS2 } from './parts2.js';
 
 const G = (...c) => { const g = new THREE.Group(); c.forEach(x => g.add(x)); return g; };
 const cyl = (r, h, mat, seg = 48) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
@@ -48,9 +49,9 @@ function fanBlade() {
   const ti = M.titanium(); ti.roughness = .32;
   const g = bladeGeometry({ rootR: 0, tipR: 2.1, rootChord: .62, tipChord: .66, twistRoot: .32, twistTip: 1.15, sweep: -.28, lean: -.14, thick: .13, camber: .1, segS: 60, segC: 24, belly: .42 });
   const blade = new THREE.Mesh(g, ti);
-  const root = new THREE.Mesh(rbox(.42, .16, .86, .02), M.dark());
+  const root = new THREE.Mesh(rbox(.42, .16, .86, .02), ti);
   root.position.set(0, -.08, .03); root.rotation.y = .32;
-  const dove = new THREE.Mesh(rbox(.58, .12, .86, .02), M.alu());
+  const dove = new THREE.Mesh(rbox(.58, .12, .86, .02), ti);
   dove.position.set(0, -.2, .03); dove.rotation.y = .32;
   const out = G(blade, root, dove); out.position.y = -.95; return G(out);
 }
@@ -101,7 +102,7 @@ function displayTexture() {
 function display() {
   const body = new THREE.Mesh(rbox(1.5, 1.86, .34, .05), M.graphite());
   const tex = displayTexture();
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 1.45), new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .9, roughness: .12, metalness: 0 }));
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.16, 1.45), new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .9, roughness: .12, metalness: 0, name: 'screen' }));
   screen.position.z = .192;
   const trim = new THREE.Mesh(rbox(1.2, 1.5, .02, .008), new THREE.MeshStandardMaterial({ color: 0x050506, roughness: .3 }));
   trim.position.z = .172;
@@ -131,6 +132,8 @@ function pump(accent = 'alu', fuel = false) {
   g.add(port(.62, .3, 0, 0)); g.add(port(-.6, -.28, 0, Math.PI, .12));
   const conn = cyl(.12, .3, M.brass()); conn.position.set(.1, -.3, .56); conn.rotation.x = Math.PI / 2; g.add(conn);
   g.add(tube([[.62, .3, .16], [.72, .5, .4], [.4, .68, .5], [.2, .74, .46]], .022, pol));
+  const pl = plate(fuel ? ['FUEL BOOST PUMP', 'P/N FP-6120', 'S/N 77341'] : ['HYDRAULIC PUMP', 'P/N HP-30772', 'S/N 40918']);
+  pl.rotation.x = Math.PI / 2 * -1; pl.position.set(0, .532, -.3); pl.rotation.order = 'YXZ'; g.add(pl);
   return g;
 }
 
@@ -148,6 +151,7 @@ function valve() {
   g.add(at(cyl(.2, .34, M.alu()), -.42, 1.26, 0, 0, 0, Math.PI / 2));
   g.add(at(cyl(.09, .22, br), .42, 1.6, 0));
   g.add(tube([[.56, 1.06, .2], [.92, .78, .3], [.95, .3, .36], [.86, .02, .28]], .02, pol));
+  const pl = plate(['BLEED AIR VALVE', 'P/N BV-3290', 'S/N 11872'], .42, .22); pl.position.set(.24, 1.26, .316); g.add(pl);
   g.position.y = -.42;
   return G(g);
 }
@@ -165,6 +169,7 @@ function starter() {
   const box = new THREE.Mesh(rbox(.42, .22, .56, .03), M.alu()); box.position.set(0, .54, -.22); g.add(box);
   g.add(at(cyl(.09, .18, M.brass()), .12, .72, -.32));
   g.add(at(cyl(.09, .18, M.brass()), -.12, .72, -.1));
+  const pl = plate(['APU STARTER MOTOR', 'P/N SM-9014', '28 V DC'], .3, .18); pl.position.set(.215, .54, -.22); pl.rotation.y = Math.PI / 2; g.add(pl);
   g.rotation.y = Math.PI / 2; g.scale.setScalar(.92);
   return G(g);
 }
@@ -184,7 +189,8 @@ function actuator() {
   const man = new THREE.Mesh(rbox(.34, .2, .62, .03), al); man.position.set(0, .3, -.5); g.add(man);
   g.add(at(cyl(.06, .18, M.brass()), .06, .46, -.68)); g.add(at(cyl(.06, .18, M.brass()), .06, .46, -.32));
   g.add(tube([[.06, .55, -.32], [.32, .5, 0], [.32, .3, .3], [.2, .15, .2]], .018, pol));
-  g.rotation.y = Math.PI / 2; g.rotation.z = -.42;
+  const pl = plate(['FLAP ACTUATOR', 'P/N AC-5561-3', 'S/N 6620'], .26, .14); pl.position.set(0, .402, -.5); pl.rotation.set(-Math.PI / 2, 0, Math.PI / 2); g.add(pl);
+  g.rotation.y = Math.PI / 2;
   return G(g);
 }
 
@@ -199,7 +205,8 @@ function landingLight() {
   const rings = [[.16, 6, -.26], [.38, 12, -.13], [.6, 18, -.0]];
   for (const [r, n, z] of rings) { g.add(polar(die, led, n, r, z, Math.PI / 2)); g.add(polar(new THREE.CylinderGeometry(.1, .1, .012, 24), M.graphite(), n, r, z - .018, Math.PI / 2)); }
   g.add(at(cyl(.06, .03, led), 0, 0, -.31, Math.PI / 2));
-  const glass = lathe(smooth([[.96, .2], [.7, .32], [.3, .38], [0, .4]], 30), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: .02, transparent: true, opacity: .1, clearcoat: 1, side: THREE.DoubleSide }), 96);
+  led.name = 'led';
+  const glass = lathe(smooth([[.96, .2], [.7, .32], [.3, .38], [0, .4]], 30), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: .02, transparent: true, opacity: .1, clearcoat: 1, side: THREE.DoubleSide, name: 'glass' }), 96);
   g.add(glass);
   g.add(polar(new THREE.CylinderGeometry(.024, .024, .05, 10), M.polished(), 12, .96, .2, Math.PI / 2));
   return g;
@@ -226,6 +233,7 @@ function pitot() {
 
 // Per-part view: rotation of the model in the frame.
 export const MODELS = {
+  ...MODELS2,
   'wheel':    { make: wheelTyre,       rot: [-.14, -.62, 0] },
   'brake':    { make: () => brake(true), rot: [-.1, -.7, 0] },
   'blade':    { make: fanBlade,        rot: [.1, .42, -.38] },
