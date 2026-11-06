@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="pre">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>SIRB Aero: aircraft parts in Dubai</title>
+<meta name="description" content="Certified aircraft parts on the shelf at Dubai's airports, priced in dirhams, on the next flight out.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>/*{{CSS}}*/</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.4 13.4 17 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 20 20"><path d="m4.5 10.5 3.8 3.8 7.2-8.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 20 20"><path d="M4.5 7h11l-.8 9.2a1 1 0 0 1-1 .8H6.3a1 1 0 0 1-1-.8zM7.2 7V5.6a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 28 22"><path d="M14 1.5 19.4 10 14 7.6 8.6 10zM5.4 11.5l5.4 8.5-5.4-2.4L0 20zM22.6 11.5 28 20l-5.4-2.4L17.2 20z" fill="currentColor"/></symbol>
+</svg>
+
+<header class="nav" id="nav">
+  <div class="nav-in">
+    <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB</span></a>
+    <nav class="links" aria-label="Main">
+      <a href="#parts" data-t="navParts"></a>
+      <a href="#aog" data-t="navAog"></a>
+      <a href="#gulf" data-t="navGulf"></a>
+      <a href="#trace" data-t="navTrace"></a>
+    </nav>
+    <div class="tools">
+      <button class="ghost icon" id="navSearch" type="button"><svg width="17" height="17" aria-hidden="true"><use href="#i-search"/></svg><span class="sr" data-t="search"></span></button>
+      <button class="ghost" id="curBtn" type="button"></button>
+      <button class="ghost" id="langBtn" type="button"></button>
+      <button class="solid small" id="quoteBtn" type="button"><span data-t="quote"></span><b id="qCount" aria-live="polite">0</b></button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="story" id="story">
+    <div class="stage" id="stage">
+      <div class="halo" id="halo" aria-hidden="true"></div>
+      <img class="poster" id="poster" alt="" aria-hidden="true">
+      <canvas class="gl" id="gl" aria-hidden="true"></canvas>
+
+      <div class="scrim" id="scrim" aria-hidden="true"></div>
+      <div class="hero" id="hero">
+        <h1 data-t="h1" class="breaks"></h1>
+        <p class="lede" data-t="lede"></p>
+        <button class="searchpill" id="heroSearch" type="button">
+          <svg width="18" height="18" aria-hidden="true"><use href="#i-search"/></svg>
+          <span data-t="heroSearch"></span>
+          <kbd>⌘K</kbd>
+        </button>
+        <p class="status"><i></i><span id="clock"></span></p>
+      </div>
+
+      <div class="beat beat1" id="beat1"><h2 class="d2 breaks" data-t="s1"></h2></div>
+      <div class="beat beat2" id="beat2"><h2 class="d2" data-t="s2"></h2><p data-t="s2b"></p></div>
+      <div class="hotspots" id="hotspots"></div>
+      <div id="chapters"></div>
+    </div>
+  </section>
+
+  <section class="sect catalogue" id="parts">
+    <div class="wrap">
+      <header class="head reveal">
+        <h2 class="d1" data-t="catT"></h2>
+        <p class="sub" data-t="catS"></p>
+      </header>
+      <div class="filterbar reveal">
+        <div class="seg" id="fleetSeg" role="group"></div>
+        <div class="seg seg-sub" id="catSeg" role="group"></div>
+      </div>
+      <p class="found" id="found" aria-live="polite"></p>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="sect aog" id="aog">
+    <div class="wrap aog-head reveal">
+      <h2 class="d1 breaks" data-t="aogT"></h2>
+      <p class="sub" data-t="aogS"></p>
+    </div>
+    <div class="globewrap">
+      <canvas id="globe" aria-hidden="true"></canvas>
+      <div class="wrap float">
+        <aside class="glass ticket reveal" id="ticket"></aside>
+        <aside class="glass routes reveal" id="routes"></aside>
+      </div>
+    </div>
+    <div class="aog-cta"><button class="solid" type="button" data-open-quote data-t="aogBtn"></button></div>
+  </section>
+
+  <section class="sect gulf" id="gulf">
+    <div class="wrap">
+      <header class="head reveal"><h2 class="d1 breaks" data-t="gulfT"></h2></header>
+      <div class="bento" id="bento"></div>
+    </div>
+  </section>
+
+  <section class="sect trace" id="trace">
+    <div class="wrap">
+      <header class="head reveal">
+        <h2 class="d1 breaks" data-t="traceT"></h2>
+        <p class="sub" data-t="traceS"></p>
+      </header>
+      <div class="trace-grid">
+        <div class="cert reveal" id="cert" dir="ltr"></div>
+        <ol class="life reveal" id="life"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="endcap" id="end">
+    <div class="wrap reveal">
+      <h2 class="d0 breaks" data-t="endT"></h2>
+      <button class="solid large" type="button" id="endSearch" data-t="endBtn"></button>
+    </div>
+    <img class="end-img" id="endImg" alt="" aria-hidden="true">
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <a class="logo" href="#top" aria-label="SIRB Aero"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB</span></a>
+        <p data-t="fCo"></p>
+      </div>
+      <div class="foot-cols">
+        <div><h3 data-t="fShop"></h3><a href="#parts" data-t="navParts"></a><a href="#gulf" data-t="navGulf"></a></div>
+        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#trace" data-t="navTrace"></a></div>
+      </div>
+    </div>
+    <div class="foot-end"><span>© 2026 SIRB Aero</span><span data-t="demo"></span></div>
+  </div>
+</footer>
+
+<dialog class="palette" id="palette" aria-label="Search">
+  <div class="pal-in">
+    <div class="pal-top">
+      <svg width="20" height="20" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="palInput" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palList">
+      <button class="esc" type="button" id="palClose">esc</button>
+    </div>
+    <div class="pal-list" id="palList" role="listbox"></div>
+  </div>
+</dialog>
+
+<dialog class="drawer" id="drawer" aria-labelledby="dTitle">
+  <div class="d-in">
+    <div class="d-head"><h2 id="dTitle" data-t="dTitle"></h2><button class="ghost" type="button" id="dClose" data-t="close"></button></div>
+    <div class="d-body" id="dBody"></div>
+  </div>
+</dialog>
+<script>/*{{JS}}*/</script>
+</body>
+</html>
