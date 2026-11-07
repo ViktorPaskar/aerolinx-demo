@@ -168,8 +168,7 @@ function card(p) {
     ? `<div class="c-buy">
         <div class="c-pr">
           <span class="c-st"><i class="cd c-${best.c}"></i>${t(best.c)} · ${t('inStock')(best.qty)}${best.c === 'AR' ? ` · ${t('noCert')}` : ''}</span>
-          <span class="c-price">${money(best.aed)}</span>
-          ${more ? `<span class="c-more">${t('moreConds')(more)}</span>` : ''}
+          <span class="c-price">${money(best.aed)}${more ? `<small class="c-more">${t('moreConds')(more)}</small>` : ''}</span>
         </div>
         <button type="button" class="c-add${on ? ' in' : ''}" data-addo="${esc(p.pn)}|${i}" aria-label="${esc(`${on ? t('inq') : t('add')}: ${p.pn}, ${t(best.c)}, ${money(best.aed)}`)}">${icon(on ? 'i-check' : 'i-plus', 20)}</button>
       </div>`
