@@ -256,6 +256,16 @@ button.cell:active{transform:scale(.97)}
 .c-quote span small{display:block;font-size:12.5px}
 .c-quote b{flex:none;font-size:14px;font-weight:600;color:var(--brand)}
 .c-quote{margin-top:14px}
+/* Out of stock: the photo turns grey so the shelf reads at a glance */
+.card.out .c-photo img,.gal-main.out img,.gal-th.out img{filter:grayscale(1) contrast(.88) brightness(1.06);opacity:.62}
+.card.out .c-photo,.gal-main.out{background:linear-gradient(160deg,#ececee,#dcdce0)}
+.card.out:hover .c-photo img{transform:none}
+.card.out h3,.card.out .pn{color:var(--t2)}
+.card.out .cert{opacity:.6}
+.soldout{position:absolute;inset-inline-start:8px;bottom:8px;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;background:rgba(29,29,31,.82);color:#fff;font:600 11.5px/1 var(--body);letter-spacing:.01em;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.soldout::before{content:"";width:6px;height:6px;border-radius:50%;background:#8e8e93}
+.gal-main .soldout{inset-inline-start:auto;inset-inline-end:12px;bottom:auto;top:12px;height:28px;font-size:12.5px}
+
 .grid:not(.as-list) .c-offers{gap:5px;padding:12px 8px 8px}
 .grid:not(.as-list) .cell:not(.one){padding:8px 8px 9px}
 .grid:not(.as-list) .cell:not(.one) .cp{font-size:13.5px}

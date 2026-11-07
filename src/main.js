@@ -165,9 +165,9 @@ function card(p) {
   const offers = any
     ? `<div class="c-offers n${p.offers.length}">${p.offers.map((o, i) => cell(p, o, i, o === best, p.offers.length === 1)).join('')}</div>`
     : `<button type="button" class="c-quote" data-add="${esc(p.pn)}"><span><i class="cd off"></i><span><strong>${t('notShelf')}</strong><small>${t('quoteIn')}</small></span></span><b>${t('getQuote')}</b></button>`;
-  return `<article class="card" data-card="${p.pn}">
-    <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn)}"></a>
-    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async"></div>
+  return `<article class="card${any ? '' : ' out'}" data-card="${p.pn}">
+    <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn + (any ? '' : ', ' + t('outStock')))}"></a>
+    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async">${any ? '' : `<span class="soldout">${t('outStock')}</span>`}</div>
     <div class="c-head">
       <div class="pnrow"><span class="pn" dir="ltr">${p.pn}</span><button type="button" class="copy" data-copy="${p.pn}" aria-label="${esc(t('copy') + ' ' + p.pn)}">${icon('i-copy', 14)}</button>${cs ? `<span class="cert">${cs}</span>` : ''}</div>
       <h3>${nameOf(p)}</h3>
@@ -203,7 +203,9 @@ function shop(cat) {
 /* ---------- Product page ---------- */
 function openPdp(pn) {
   const p = byPn(pn); if (!p) { closeOverlays(); return; }
-  const bf = bestFit(p); const oi = p.offers.indexOf(bf || bestOffer(p));
+  const nonAr = p.offers.filter(o => o.c !== 'AR');
+  const bf = bestFit(p) || (stock(p) ? bestOffer(p) : nonAr.length ? nonAr.reduce((x, o) => o.aed < x.aed ? o : x) : p.offers[0]);
+  const oi = p.offers.indexOf(bf);
   S.pd = { pn, oi, type: 'out', qty: 1, view: p.view, tab: 'spec' };
   S.recent = [pn, ...S.recent.filter(x => x !== pn)].slice(0, 9); store('recent', S.recent);
   renderPdp();
@@ -234,8 +236,8 @@ function renderPdp() {
     <div class="wrap">
       <div class="pd-main">
         <div class="gal">
-          <div class="gal-main"><img src="${photo(p, d.view)}" alt="${esc(nameOf(p))}"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
-          <div class="gal-th">${[1, 2, 3].map(v => `<button type="button" data-gal="${v}" aria-pressed="${v === d.view}" aria-label="${esc(nameOf(p))}, ${v} / 3"><img src="${photo(p, v)}" alt="" loading="lazy"></button>`).join('')}</div>
+          <div class="gal-main${stock(p) ? '' : ' out'}"><img src="${photo(p, d.view)}" alt="${esc(nameOf(p))}">${stock(p) ? '' : `<span class="soldout">${t('outStock')}</span>`}<span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
+          <div class="gal-th${stock(p) ? '' : ' out'}">${[1, 2, 3].map(v => `<button type="button" data-gal="${v}" aria-pressed="${v === d.view}" aria-label="${esc(nameOf(p))}, ${v} / 3"><img src="${photo(p, v)}" alt="" loading="lazy"></button>`).join('')}</div>
         </div>
         <div class="pd-info">
           <p class="eyebrow">ATA ${p.ata}, <bdi>${p.maker}</bdi></p>
