@@ -256,6 +256,23 @@ button.cell:active{transform:scale(.97)}
 .c-quote span small{display:block;font-size:12.5px}
 .c-quote b{flex:none;font-size:14px;font-weight:600;color:var(--brand)}
 .c-quote{margin-top:14px}
+/* Card buy row: one status, one price, one action */
+.c-buy{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:auto;padding:14px 16px 16px}
+.c-pr{display:flex;flex-direction:column;gap:3px;min-width:0}
+.c-st{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-price{font:600 20px/1.15 var(--display);letter-spacing:-.015em;font-variant-numeric:tabular-nums;color:var(--t1)}
+.c-more{font-size:12.5px;color:var(--t3)}
+.c-q{font-size:13px;color:var(--t2)}
+.c-add{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--btn);color:var(--btnt);transition:transform .2s var(--ease),background .2s}
+.c-add:hover{background:var(--btnh)}
+.c-add:active{transform:scale(.92)}
+.c-add.in{background:var(--brand2);color:var(--brand);box-shadow:inset 0 0 0 1.5px var(--btn)}
+.c-quote2{flex:none;height:40px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--t1);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2)}
+.c-quote2:hover{background:var(--hover)}
+.c-head .pn{display:block}
+.as-list .c-buy{padding:16px 20px}
+.minis .c-more{display:none}
+
 /* Out of stock: the photo turns grey so the shelf reads at a glance */
 .card.out .c-photo img,.gal-main.out img,.gal-th.out img{filter:grayscale(1) contrast(.88) brightness(1.06);opacity:.62}
 .card.out .c-photo,.gal-main.out{background:linear-gradient(160deg,#ececee,#dcdce0)}
@@ -839,13 +856,14 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .grid,.grid.as-list{grid-template-columns:minmax(0,1fr);gap:12px}
   .viewt{display:none}
-  .card,.as-list .card{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:start}
+  .card,.as-list .card{display:grid;grid-template-columns:116px minmax(0,1fr);align-items:start}
   .card .c-photo,.as-list .c-photo{grid-row:1;aspect-ratio:1;margin:8px 0 0 8px;border-radius:14px}
   [dir=rtl] .card .c-photo{margin:8px 8px 0 0}
   .c-head,.as-list .c-head{padding:12px 12px 0 14px}
-  .card h3{font-size:16.5px;margin-top:6px}
-  .c-offers,.as-list .c-offers{grid-column:1/-1;padding:12px 8px 8px}
-  .c-quote,.as-list .c-quote{grid-column:1/-1;margin:12px 8px 8px}
+  .card h3{font-size:16.5px;margin-top:4px}
+  .c-head .fits{font-size:13px}
+  .c-buy,.as-list .c-buy{grid-column:1/-1;padding:12px 14px 14px;align-items:center}
+  .c-price{font-size:19px}
   .cell{padding:10px 10px 11px}
   .cp{font-size:15px}
   .minis{grid-template-columns:minmax(0,1fr)}

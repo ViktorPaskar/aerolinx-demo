@@ -161,19 +161,31 @@ function cell(p, o, i, best, one) {
     : `<span class="cell none${one ? ' one' : ''}" aria-hidden="true">${inner}</span>`;
 }
 function card(p) {
-  const best = bestFit(p), any = stock(p) > 0, cs = certShort(p);
-  const offers = any
-    ? `<div class="c-offers n${p.offers.length}">${p.offers.map((o, i) => cell(p, o, i, o === best, p.offers.length === 1)).join('')}</div>`
-    : `<button type="button" class="c-quote" data-add="${esc(p.pn)}"><span><i class="cd off"></i><span><strong>${t('notShelf')}</strong><small>${t('quoteIn')}</small></span></span><b>${t('getQuote')}</b></button>`;
+  const best = bestFit(p) || p.offers.find(o => o.qty), any = !!best;
+  const i = any ? p.offers.indexOf(best) : -1, k = any ? keyOf(p.pn, i) : '', on = any && !!S.cart[k];
+  const more = p.offers.filter(o => o !== best && o.qty).length;
+  const buy = any
+    ? `<div class="c-buy">
+        <div class="c-pr">
+          <span class="c-st"><i class="cd c-${best.c}"></i>${t(best.c)} · ${t('inStock')(best.qty)}${best.c === 'AR' ? ` · ${t('noCert')}` : ''}</span>
+          <span class="c-price">${money(best.aed)}</span>
+          ${more ? `<span class="c-more">${t('moreConds')(more)}</span>` : ''}
+        </div>
+        <button type="button" class="c-add${on ? ' in' : ''}" data-addo="${esc(p.pn)}|${i}" aria-label="${esc(`${on ? t('inq') : t('add')}: ${p.pn}, ${t(best.c)}, ${money(best.aed)}`)}">${icon(on ? 'i-check' : 'i-plus', 20)}</button>
+      </div>`
+    : `<div class="c-buy">
+        <div class="c-pr"><span class="c-q">${t('quoteIn')}</span></div>
+        <button type="button" class="c-quote2" data-add="${esc(p.pn)}">${t('getQuote')}</button>
+      </div>`;
   return `<article class="card${any ? '' : ' out'}" data-card="${p.pn}">
     <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn + (any ? '' : ', ' + t('outStock')))}"></a>
     <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async">${any ? '' : `<span class="soldout">${t('outStock')}</span>`}</div>
     <div class="c-head">
-      <div class="pnrow"><span class="pn" dir="ltr">${p.pn}</span><button type="button" class="copy" data-copy="${p.pn}" aria-label="${esc(t('copy') + ' ' + p.pn)}">${icon('i-copy', 14)}</button>${cs ? `<span class="cert">${cs}</span>` : ''}</div>
+      <span class="pn" dir="ltr">${p.pn}</span>
       <h3>${nameOf(p)}</h3>
-      <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi></p>
+      <p class="fits">${p.fits.map(fleetName).join(', ')}</p>
     </div>
-    ${offers}
+    ${buy}
   </article>`;
 }
 const buyLabel = (inq, avail) => (inq ? icon('i-check', 15) : '') + `<span>${inq ? t('inq') : avail ? t('add') : t('request')}</span>`;
