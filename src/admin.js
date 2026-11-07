@@ -66,7 +66,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   let view = 'dash', q = '', orderOpen = null, range = '30d';
   const ui = { orders: { status: 'all', aog: false, sort: 'placed', dir: 1 }, stock: { cat: 'all', level: 'all', sort: 'pn', dir: 1, page: 0 }, certs: { st: 'all' }, people: { sort: 'ltv', dir: -1 }, table: {} };
 
-  const badge = s => `<span class="st st-${slug(s)}">${s === 'Delivered' || s === 'Approved' ? ic('ok', 12) : s === 'Expires in 30 days' || s === 'Waiting for review' ? ic('clock', 12) : ''}${s}</span>`;
+  const badge = s => { const i = STATUSES.indexOf(s); return i >= 0 ? `<span class="st st-stage"><i class="c${i + 1}"></i>${s}</span>` : `<span class="st st-${slug(s)}">${s === 'Approved' ? ic('ok', 12) : s === 'Waiting for review' ? ic('clock', 12) : s.startsWith('Expires') ? ic('warn', 12) : ''}${s}</span>`; };
   const open = () => state.orders.filter(o => o.status !== 'Delivered');
   const level = n => n === 0 ? 'out' : n <= 2 ? 'low' : 'ok';
   const lvl = n => { const l = level(n); return `<span class="lv lv-${l}">${ic(l === 'ok' ? 'ok' : l === 'low' ? 'warn' : 'x', 12)}${l === 'ok' ? 'In stock' : l === 'low' ? 'Low' : 'Out'}</span>`; };
@@ -76,62 +76,115 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   const tableToggle = id => `<button class="tvbtn" data-tv="${id}" aria-pressed="${!!ui.table[id]}">${ui.table[id] ? 'Chart' : 'Table'}</button>`;
 
   /* ---------- Dashboard ---------- */
-  const series = () => range === '12m'
-    ? { labels: MONTHS, a: REV_M, b: REV_M_PREV, orders: ORD_M, unit: 'month', prevName: 'Previous year' }
-    : { labels: DAYS, a: REV_D, b: REV_D_PREV, orders: ORD_D, unit: 'day', prevName: 'Previous 30 days' };
+  // Colour follows the entity: each category, airport and order step keeps one slot everywhere.
+  const CAT_SLOT = { gear: 1, engine: 2, avionics: 3, electrical: 4, systems: 5, safety: 6 };
+  const HUB_SLOT = { DXB: 1, DWC: 2, SHJ: 3 };
+  const HUB_SHARE = { DXB: .46, DWC: .35, SHJ: .19 };
+  const GOAL = { '30d': 7.5e6, '12m': 60e6 };
+  const metricOf = () => ui.metric || 'rev';
+  const series = () => {
+    const m12 = range === '12m', base = m12 ? { labels: MONTHS, a: REV_M, b: REV_M_PREV, orders: ORD_M, unit: 'month', prevName: 'Previous year' } : { labels: DAYS, a: REV_D, b: REV_D_PREV, orders: ORD_D, unit: 'day', prevName: 'Previous 30 days' };
+    if (metricOf() === 'ord') return { ...base, a: base.orders, b: base.orders.map((v, i) => Math.round(v * (.82 + ((i * 7) % 9) / 50))), money: false };
+    return { ...base, money: true };
+  };
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const dot = (cls, label) => `<span class="ldot"><i class="${cls}"></i>${label}</span>`;
+  const STAGE_SLOT = STATUSES.map((_, i) => 'c' + (i + 1));
+  const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('');
+  const custSlot = name => { const i = CUSTOMERS.findIndex(c => c[0] === name); return 'c' + ((i < 0 ? name.length : i) % 6 + 1); };
 
   function dash() {
-    const s = series(), sum = a => a.reduce((x, y) => x + y, 0);
-    const rev = sum(s.a), revP = sum(s.b), ord = sum(s.orders), ordP = Math.round(ord * .9);
+    const base = range === '12m' ? { a: REV_M, b: REV_M_PREV, o: ORD_M } : { a: REV_D, b: REV_D_PREV, o: ORD_D };
+    const rev = sum(base.a), revP = sum(base.b), ord = sum(base.o), ordP = Math.round(ord * .9), aov = rev / ord, aovP = revP / ordP;
     const aogOpen = state.orders.filter(o => o.aog && o.status !== 'Delivered');
-    const lowN = PARTS.filter(p => stock(p) <= 2).length;
-    const kpi = (go, label, val, d, spark, sub) => `<button class="kpi" data-go="${go}"><span>${label}</span><strong>${val}</strong><div class="kpi-f">${d}<small>${sub}</small></div><div class="spark" data-spark="${spark}"></div></button>`;
-    return `<header class="a-h"><h1>Dashboard</h1>
+    const now = new Date(), when = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Dubai' }), time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' });
+    const kpi = (go, slot, icon, label, val, d, spark, sub) => `<button class="kpi" data-go="${go}" style="--k:var(--${slot})"><span class="kh"><i class="kic">${ic(icon, 16)}</i>${label}</span><strong>${val}</strong><div class="kpi-f">${d}<small>${sub}</small></div><div class="spark" data-spark="${spark}"></div></button>`;
+    const vs = range === '12m' ? 'vs last year' : 'vs prior 30 days';
+    const s = series();
+    return `<header class="a-h dash-h"><div><h1>Overview</h1><p class="pnote">${when} · Dubai ${time} <span class="live"><i></i>Live</span></p></div>
         <div class="seg" role="group" aria-label="Period">${[['30d', '30 days'], ['12m', '12 months']].map(([k, l]) => `<button data-range="${k}" aria-pressed="${range === k}">${l}</button>`).join('')}</div>
-        <button class="a-btn ghost" data-reset title="Restore the sample orders, stock and settings">Reset demo data</button></header>
+        <button class="a-btn ghost" data-export>${ic('orders', 15)}Export CSV</button></header>
       <div class="kpis">
-        ${kpi('orders', 'Revenue', fmtM(rev), delta(rev, revP), 'rev', range === '12m' ? 'vs previous year' : 'vs previous 30 days')}
-        ${kpi('orders', 'Orders', ord.toLocaleString('en-US'), delta(ord, ordP), 'ord', range === '12m' ? 'vs previous year' : 'vs previous 30 days')}
-        ${kpi('aog', 'AOG first reply', '14 min', delta(14, 17, true), 'aog', `median · ${aogOpen.length} open now`)}
-        ${kpi('stock', 'Low or out of stock', String(lowN), `<em class="dl ${lowN > 15 ? 'bad' : 'good'}">${ic(lowN > 15 ? 'warn' : 'ok', 12)}${lowN > 15 ? 'Reorder' : 'Healthy'}</em>`, 'stk', `of ${PARTS.length} listed parts`)}
+        ${kpi('orders', 'c1', 'dash', 'Revenue', fmtM(rev), delta(rev, revP), 'rev', vs)}
+        ${kpi('orders', 'c3', 'orders', 'Orders', ord.toLocaleString('en-US'), delta(ord, ordP), 'ord', vs)}
+        ${kpi('orders', 'c5', 'stock', 'Average order', fmtM(aov), delta(aov, aovP), 'aov', vs)}
+        ${kpi('aog', 'c2', 'clock', 'AOG first reply', '14 min', delta(14, 17, true), 'aog', `median · ${aogOpen.length} open`)}
       </div>
       <div class="dgrid">
-        <section class="panel span2"><div class="ph"><div><h2>Revenue</h2><p class="pnote">${range === '12m' ? 'By month, last 12 months' : 'By day, last 30 days'} · excl. VAT</p></div>
+        <section class="panel g8"><div class="ph"><div><div class="tabs" role="tablist">${[['rev', 'Revenue'], ['ord', 'Orders']].map(([k, l]) => `<button role="tab" data-metric="${k}" aria-selected="${metricOf() === k}">${l}</button>`).join('')}</div>
+            <p class="pnote">${range === '12m' ? 'By month, last 12 months' : 'By day, last 30 days'}${s.money ? ' · excl. VAT' : ''}</p></div>
           <div class="legend"><span><i class="sw a"></i>This period</span><span><i class="sw b"></i>${s.prevName}</span></div>${tableToggle('rev')}</div>
-          ${ui.table.rev ? `<div class="mini-tbl"><table><thead><tr><th>${s.unit === 'month' ? 'Month' : 'Day'}</th><th class="num">This period</th><th class="num">${s.prevName}</th><th class="num">Orders</th></tr></thead><tbody>${s.labels.map((l, i) => `<tr><td>${l}</td><td class="num">${fmt(s.a[i])}</td><td class="num">${fmt(s.b[i])}</td><td class="num">${s.orders[i]}</td></tr>`).join('')}</tbody></table></div>`
-            : `<div class="cv" data-chart="rev" role="img" aria-label="Revenue ${range === '12m' ? 'by month' : 'by day'}: ${fmtM(rev)} this period against ${fmtM(revP)} before"></div>`}</section>
-        <section class="panel"><div class="ph"><div><h2>Order pipeline</h2><p class="pnote">Open orders by step, live</p></div></div>${pipeline()}</section>
-        <section class="panel"><div class="ph"><div><h2>Revenue by category</h2><p class="pnote">Share of ${range === '12m' ? '12-month' : '30-day'} revenue</p></div></div>${catBars(rev)}</section>
-        <section class="panel"><div class="ph"><div><h2>AOG first reply</h2><p class="pnote">Median minutes per day, last 14 days</p></div>${tableToggle('aog')}</div>
-          ${ui.table.aog ? `<div class="mini-tbl"><table><thead><tr><th>Day</th><th class="num">Median reply</th></tr></thead><tbody>${AOG_REPLY.map((v, i) => `<tr><td>${DAYS[16 + i]}</td><td class="num">${v} min</td></tr>`).join('')}</tbody></table></div>`
-            : `<div class="cv" data-chart="aog" role="img" aria-label="AOG first reply, median minutes per day, all under the 30 minute target"></div>`}</section>
-        <section class="panel"><div class="ph"><div><h2>Units on the shelf</h2><p class="pnote">By airport and category, live</p></div></div>${heat()}</section>
-        <section class="panel span2"><div class="ph"><div><h2>Top customers</h2><p class="pnote">Lifetime value</p></div><button class="tvbtn" data-go="people">All customers</button></div>${topCustomers()}</section>
-        <section class="panel"><div class="ph"><div><h2>Recent orders</h2><p class="pnote">Click to open</p></div><button class="tvbtn" data-go="orders">All orders</button></div>
-          ${state.orders.slice(0, 6).map(o => `<button class="rowbtn" data-order="${o.id}"><span><strong>${o.id}${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</strong>${esc(o.company)}</span><span class="r">${badge(o.status)}<small>${fmt(o.total)}</small></span></button>`).join('')}</section>
+          ${ui.table.rev ? `<div class="mini-tbl"><table><thead><tr><th>${s.unit === 'month' ? 'Month' : 'Day'}</th><th class="num">This period</th><th class="num">${s.prevName}</th></tr></thead><tbody>${s.labels.map((l, i) => `<tr><td>${l}</td><td class="num">${s.money ? fmt(s.a[i]) : s.a[i]}</td><td class="num">${s.money ? fmt(s.b[i]) : s.b[i]}</td></tr>`).join('')}</tbody></table></div>`
+            : `<div class="cv" data-chart="rev" role="img" aria-label="${s.money ? 'Revenue' : 'Orders'} ${range === '12m' ? 'by month' : 'by day'} against the previous period"></div>`}</section>
+        <section class="panel g4">${goal(rev)}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Sales by category</h2><p class="pnote">Share of revenue</p></div></div>${catBars(rev)}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Order pipeline</h2><p class="pnote">All orders by step, live</p></div></div>${pipeline()}</section>
+        <section class="panel g4"><div class="ph"><div><h2>AOG first reply</h2><p class="pnote">Median minutes, last 14 days</p></div>${tableToggle('aog')}</div>
+          ${ui.table.aog ? `<div class="mini-tbl"><table><thead><tr><th>Day</th><th class="num">Median reply</th><th>Status</th></tr></thead><tbody>${AOG_REPLY.map((v, i) => `<tr><td>${DAYS[16 + i]}</td><td class="num">${v} min</td><td>${replyBadge(v)}</td></tr>`).join('')}</tbody></table></div>`
+            : `<div class="cv" data-chart="aog" role="img" aria-label="AOG first reply, median minutes per day against a 30 minute target"></div>
+              <div class="legend sm">${dot('good', 'Under 15 min')}${dot('warning', '15–30 min')}${dot('critical', 'Over target')}</div>`}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Stock health</h2><p class="pnote">${PARTS.length} listed parts, live</p></div><button class="tvbtn" data-go="stock">Inventory</button></div>${stockHealth()}${heat()}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Activity</h2><p class="pnote">Last 24 hours</p></div></div>${activity()}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Recent orders</h2><p class="pnote">Click to open</p></div><button class="tvbtn" data-go="orders">All orders</button></div>
+          ${state.orders.slice(0, 6).map(o => `<button class="rowbtn" data-order="${o.id}"><span class="av ${custSlot(o.company)}">${initials(o.company)}</span><span class="rb"><strong>${o.id}${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</strong>${esc(o.company)}</span><span class="r">${badge(o.status)}<small>${fmt(o.total)}</small></span></button>`).join('')}</section>
+        <section class="panel g12"><div class="ph"><div><h2>Top customers</h2><p class="pnote">Lifetime value and order mix</p></div><button class="tvbtn" data-go="people">All customers</button></div>${topCustomers()}</section>
       </div>`;
   }
 
+  function goal(rev) {
+    const g = GOAL[range], k = clamp(rev / g, 0, 1), r = 52, c = 2 * Math.PI * r;
+    const hubs = Object.entries(HUB_SHARE);
+    return `<div class="ph"><div><h2>${range === '12m' ? 'Annual' : 'Monthly'} target</h2><p class="pnote">${fmtM(g)} revenue goal</p></div></div>
+      <div class="goal"><svg viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="${Math.round(k * 100)} percent of target"><circle cx="64" cy="64" r="${r}" class="gtrack"/><circle cx="64" cy="64" r="${r}" class="gfill" stroke-dasharray="${(c * k).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 64 64)"/><text x="64" y="62" text-anchor="middle" class="gpct">${Math.round(k * 100)}%</text><text x="64" y="82" text-anchor="middle" class="gsub">of target</text></svg>
+        <div class="gside"><span>Achieved</span><strong>${fmtM(rev)}</strong><span>Remaining</span><strong>${fmtM(Math.max(g - rev, 0))}</strong><span class="gtag ${k >= .8 ? 'good' : 'warning'}">${ic(k >= .8 ? 'ok' : 'clock', 12)}${k >= .8 ? 'On track' : 'Behind'}</span></div></div>
+      <h3 class="ptl">Revenue by airport</h3>
+      <div class="segbar" role="img" aria-label="${hubs.map(([h, v]) => `${h} ${Math.round(v * 100)}%`).join(', ')}">${hubs.map(([h, v]) => `<span class="c${HUB_SLOT[h]}" style="flex:${v}" tabindex="0" data-tipx="${esc(`${h}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}">${Math.round(v * 100)}%</span>`).join('')}</div>
+      <div class="legend sm">${hubs.map(([h]) => dot('c' + HUB_SLOT[h], h)).join('')}</div>`;
+  }
   function pipeline() {
-    const n = STATUSES.map(s => state.orders.filter(o => o.status === s).length), max = Math.max(...n, 1);
-    return `<ol class="pipe">${STATUSES.map((s, i) => `<li data-tipx="${esc(`${s}: ${n[i]} order${n[i] === 1 ? '' : 's'}`)}" tabindex="0"><span class="pl">${s}</span><span class="pt"><i class="p${i}" style="width:${n[i] ? Math.max(n[i] / max * 100, 6) : 0}%"></i></span><b>${n[i]}</b></li>`).join('')}</ol>
-      <p class="pnote pfoot">${open().length} open · ${n[4]} delivered this week</p>`;
+    const n = STATUSES.map(st => state.orders.filter(o => o.status === st).length), tot = Math.max(sum(n), 1);
+    return `<div class="segbar thin" role="img" aria-label="${STATUSES.map((st, i) => `${st} ${n[i]}`).join(', ')}">${STATUSES.map((st, i) => n[i] ? `<span class="${STAGE_SLOT[i]}" style="flex:${n[i]}" tabindex="0" data-tipx="${esc(`${st}: ${n[i]} · ${Math.round(n[i] / tot * 100)}%`)}"></span>` : '').join('')}</div>
+      <ol class="pipe">${STATUSES.map((st, i) => `<li><span class="ldot"><i class="${STAGE_SLOT[i]}"></i>${st}</span><span class="pp">${Math.round(n[i] / tot * 100)}%</span><b>${n[i]}</b></li>`).join('')}</ol>
+      <p class="pnote pfoot">${open().length} open · ${n[4]} delivered</p>`;
   }
   function catBars(rev) {
     const rows = Object.entries(CAT_SHARE).sort((a, b) => b[1] - a[1]), max = rows[0][1];
-    return `<div class="hbars">${rows.map(([c, v]) => `<div class="hb" tabindex="0" data-tipx="${esc(`${CAT_NAME[c]}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}"><span class="hl">${CAT_NAME[c]}</span><span class="ht"><i style="width:${v / max * 100}%"></i></span><b>${Math.round(v * 100)}%</b></div>`).join('')}</div>`;
+    return `<div class="hbars">${rows.map(([c, v]) => `<div class="hb" tabindex="0" data-tipx="${esc(`${CAT_NAME[c]}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}"><span class="hl"><i class="c${CAT_SLOT[c]}"></i>${CAT_NAME[c]}</span><span class="ht"><i class="c${CAT_SLOT[c]}" style="width:${v / max * 100}%"></i></span><b>${fmtM(rev * v)}</b></div>`).join('')}</div>`;
+  }
+  const replyBadge = v => v < 15 ? `<span class="sb good">${ic('ok', 12)}Fast</span>` : v <= 30 ? `<span class="sb warning">${ic('clock', 12)}OK</span>` : `<span class="sb critical">${ic('warn', 12)}Late</span>`;
+  function stockHealth() {
+    const n = { ok: 0, low: 0, out: 0 }; PARTS.forEach(p => { n[level(stock(p))]++; });
+    const parts = [['ok', 'good', 'In stock'], ['low', 'warning', 'Low'], ['out', 'critical', 'Out']];
+    return `<div class="segbar thin" role="img" aria-label="${parts.map(([k, , l]) => `${l} ${n[k]}`).join(', ')}">${parts.map(([k, c, l]) => n[k] ? `<span class="${c}" style="flex:${n[k]}" tabindex="0" data-tipx="${esc(`${l}: ${n[k]} parts`)}"></span>` : '').join('')}</div>
+      <div class="sh3">${parts.map(([k, c, l]) => `<button class="shc" data-golv="${k}"><span class="ldot"><i class="${c}"></i>${l}</span><strong>${n[k]}</strong></button>`).join('')}</div>`;
   }
   function heat() {
     const units = HUBS.map(h => CATS.map(c => PARTS.filter(p => p.cat === c).reduce((a, p) => a + p.offers.filter(o => o.from === h).reduce((x, o) => x + o.qty, 0), 0)));
     const max = Math.max(...units.flat(), 1), bin = v => v === 0 ? 0 : Math.min(5, Math.ceil(v / max * 5));
-    return `<div class="heat" style="--cols:${CATS.length}"><span></span>${CATS.map(c => `<span class="hx" title="${CAT_NAME[c]}">${CAT_NAME[c].split(/[ ,]/)[0]}</span>`).join('')}
+    return `<h3 class="ptl">Units by airport and category</h3><div class="heat" style="--cols:${CATS.length}"><span></span>${CATS.map(c => `<span class="hx" title="${CAT_NAME[c]}">${{ gear: 'Gear', engine: 'Eng', avionics: 'Avio', electrical: 'Elec', systems: 'Sys', safety: 'Safe' }[c]}</span>`).join('')}
       ${HUBS.map((h, i) => `<span class="hy">${h}</span>${units[i].map((v, j) => `<span class="hc h${bin(v)}" tabindex="0" data-tipx="${esc(`${h} · ${CAT_NAME[CATS[j]]}: ${v} units`)}">${v}</span>`).join('')}`).join('')}</div>
-      <div class="hscale"><span>0</span>${[1, 2, 3, 4, 5].map(b => `<i class="h${b}"></i>`).join('')}<span>${max} units</span></div>`;
+      <div class="hscale"><span>0</span>${[1, 2, 3, 4, 5].map(b => `<i class="h${b}"></i>`).join('')}<span>${max}</span></div>`;
+  }
+  function activity() {
+    const o = state.orders;
+    const items = [
+      ['critical', 'warn', `AOG request ${o[0]?.id || ''}`, `${esc(o[0]?.company || '')} · A320 brake`, '18 min'],
+      ['c1', 'orders', `New order ${o[1]?.id || ''}`, `${esc(o[1]?.company || '')} · ${fmt(o[1]?.total || 0)}`, '42 min'],
+      ['good', 'ok', 'Certificate approved', 'EASA Form 1 · CB-7924-22', '1 h'],
+      ['c3', 'dash', 'Payment received', `Oasis Jet MRO · ${fmt(286400)}`, '3 h'],
+      ['warning', 'stock', 'Stock running low', 'GN-8234-06 · 0 left at SHJ', '5 h'],
+      ['c5', 'people', 'New customer', 'Muscat Wings · Airline', '9 h'],
+    ];
+    return `<ol class="feed">${items.map(([c, i, t, d, w]) => `<li><i class="fi ${c}">${ic(i, 14)}</i><div><strong>${t}</strong><span>${d}</span></div><time>${w}</time></li>`).join('')}</ol>`;
   }
   function topCustomers() {
-    const rows = [...CUSTOMERS].sort((a, b) => b[4] - a[4]).slice(0, 5), max = rows[0][4];
-    return `<div class="mini-tbl"><table><thead><tr><th>Company</th><th>Type</th><th class="num">Orders</th><th class="w40">Lifetime value</th></tr></thead><tbody>
-      ${rows.map(c => `<tr><td><strong>${c[0]}</strong><small class="sub">${c[2]}</small></td><td>${c[1]}</td><td class="num">${c[3]}</td><td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td></tr>`).join('')}</tbody></table></div>`;
+    const rows = [...CUSTOMERS].sort((a, b) => b[4] - a[4]).slice(0, 6), max = rows[0][4];
+    const mix = name => { const r = rng(name.length * 97); const a = Object.keys(CAT_SLOT).map(k => [k, .3 + r()]); const t = sum(a.map(x => x[1])); return a.map(([k, v]) => [k, v / t]); };
+    return `<div class="mini-tbl"><table><thead><tr><th>Company</th><th>Type</th><th class="num">Orders</th><th class="w30">Lifetime value</th><th class="w30">Category mix</th></tr></thead><tbody>
+      ${rows.map(c => `<tr><td><span class="who"><span class="av ${custSlot(c[0])}">${initials(c[0])}</span><span><strong>${c[0]}</strong><small class="sub">${c[2]}</small></span></span></td><td><span class="tp tp-${slug(c[1])}">${c[1]}</span></td><td class="num">${c[3]}</td>
+        <td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td>
+        <td><span class="segbar mini">${mix(c[0]).map(([k, v]) => `<span class="c${CAT_SLOT[k]}" style="flex:${v}" data-tipx="${esc(`${CAT_NAME[k]}: ${Math.round(v * 100)}%`)}"></span>`).join('')}</span></td></tr>`).join('')}</tbody></table>
+      <div class="legend sm">${Object.keys(CAT_SLOT).map(k => dot('c' + CAT_SLOT[k], CAT_NAME[k])).join('')}</div></div>`;
   }
 
   /* ---------- Orders ---------- */
@@ -209,7 +262,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const rows = CUSTOMERS.filter(c => !q || (c[0] + c[1] + c[2]).toLowerCase().includes(q)).sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * s.dir; });
     return `<header class="a-h"><h1>Customers</h1><input class="a-search" data-q type="search" placeholder="Search customers" value="${esc(q)}" aria-label="Search customers"></header>
       <div class="tbl"><table><thead><tr>${th('people', 'name', 'Company')}${th('people', 'type', 'Type')}<th>Location</th>${th('people', 'orders', 'Orders', 'num')}${th('people', 'ltv', 'Lifetime value', 'w30')}<th>Terms</th></tr></thead><tbody>
-      ${rows.map(c => `<tr><td><strong>${c[0]}</strong></td><td>${c[1]}</td><td>${c[2]}</td><td class="num">${c[3]}</td><td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td><td>${c[3] > 25 ? '30-day account' : 'Bank transfer'}</td></tr>`).join('') || '<tr><td colspan="6" class="none">No customers match.</td></tr>'}
+      ${rows.map(c => `<tr><td><span class="who"><span class="av ${custSlot(c[0])}">${initials(c[0])}</span><strong>${c[0]}</strong></span></td><td><span class="tp tp-${slug(c[1])}">${c[1]}</span></td><td>${c[2]}</td><td class="num">${c[3]}</td><td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td><td>${c[3] > 25 ? '30-day account' : 'Bank transfer'}</td></tr>`).join('') || '<tr><td colspan="6" class="none">No customers match.</td></tr>'}
       </tbody></table></div>`;
   }
 
@@ -222,7 +275,8 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
         ${tog('usd', 'Show prices in other currencies', 'Let buyers switch from AED to USD, EUR or SAR')}
         ${tog('bulk', 'Bulk parts list', 'Let buyers paste a list of part numbers')}
         <label class="fld">VAT rate, %<input class="num-in wide" type="number" value="${s.vat}" data-setn="vat" min="0" max="100"></label>
-      </section>`;
+      </section>
+      <section class="panel setp" style="margin-top:12px"><h2>Demo data</h2><div class="fld"><span><strong>Reset the demo</strong><em class="sub">Restores sample orders, stock and settings</em></span><button class="a-btn ghost" data-reset>Reset demo data</button></div></section>`;
   }
 
   const views = { dash, orders, aog, stock: stockV, certs, people, settings };
@@ -253,7 +307,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const ticks = [0, .25, .5, .75, 1].map(k => top * k), every = Math.ceil(n / Math.max(2, Math.floor((W - L) / 70)));
     el.innerHTML = `<svg width="${W}" height="${H}" tabindex="0" aria-hidden="false">
       <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--series)" stop-opacity=".22"/><stop offset="1" stop-color="var(--series)" stop-opacity="0"/></linearGradient></defs>
-      ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v ? (v >= 1e6 ? (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + 'M' : Math.round(v / 1e3) + 'k') : '0'}</text>`).join('')}
+      ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${!s.money ? Math.round(v) : v ? (v >= 1e6 ? (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + 'M' : Math.round(v / 1e3) + 'k') : '0'}</text>`).join('')}
       ${s.labels.map((l, i) => (i % every === 0 && n - 1 - i >= every * .7) || i === n - 1 ? `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${l}</text>` : '').join('')}
       <path d="${path(s.a)}L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z" fill="url(#ag)"/>
       <path class="lb" d="${path(s.b)}"/><path class="la" d="${path(s.a)}"/>
@@ -267,7 +321,8 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
       const cx = x(cur); g.querySelector('line').setAttribute('x1', cx); g.querySelector('line').setAttribute('x2', cx);
       const da = g.querySelector('.da'), db = g.querySelector('.db'); da.setAttribute('cx', cx); da.setAttribute('cy', y(s.a[cur])); db.setAttribute('cx', cx); db.setAttribute('cy', y(s.b[cur]));
       const r = svg.getBoundingClientRect(), d = pct(s.a[cur], s.b[cur]);
-      showTip(`<strong>${s.labels[cur]}</strong><span><i class="sw a"></i>This period<b>${fmt(s.a[cur])}</b></span><span><i class="sw b"></i>${s.prevName}<b>${fmt(s.b[cur])}</b></span><span class="tdl ${d >= 0 ? 'good' : 'bad'}">${d >= 0 ? '+' : ''}${d}% · ${s.orders[cur]} orders</span>`, r.left + cx, r.top + y(Math.max(s.a[cur], s.b[cur])) - 10);
+      const f = v => s.money ? fmt(v) : `${v} orders`;
+      showTip(`<strong>${s.labels[cur]}</strong><span><i class="sw a"></i>This period<b>${f(s.a[cur])}</b></span><span><i class="sw b"></i>${s.prevName}<b>${f(s.b[cur])}</b></span><span class="tdl ${d >= 0 ? 'good' : 'bad'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}% vs before</span>`, r.left + cx, r.top + y(Math.max(s.a[cur], s.b[cur])) - 10);
     };
     const leave = () => { g.setAttribute('visibility', 'hidden'); hideTip(); cur = -1; };
     svg.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(); at(Math.round((e.clientX - r.left - L) / (W - L - R) * (n - 1))); });
@@ -279,24 +334,25 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
 
   function colChart(el) {
     const W = el.clientWidth; if (!W) return;
-    const H = 200, L = 34, R = 8, T = 14, B = 26, n = AOG_REPLY.length, top = 40, target = 30;
-    const bw = (W - L - R) / n, y = v => T + (H - T - B) * (1 - v / top);
+    const H = 190, L = 30, R = 6, T = 16, B = 24, n = AOG_REPLY.length, top = 40, target = 30;
+    const bw = (W - L - R) / n, y = v => T + (H - T - B) * (1 - v / top), cls = v => v < 15 ? 'good' : v <= 30 ? 'warning' : 'critical';
     el.innerHTML = `<svg width="${W}" height="${H}">
-      ${[0, 10, 20, 30, 40].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('')}
+      ${[0, 15, 30].map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('')}
       <line class="target" x1="${L}" x2="${W - R}" y1="${y(target)}" y2="${y(target)}"/><text class="tlab" x="${W - R}" y="${y(target) - 6}" text-anchor="end">Target 30 min</text>
-      ${AOG_REPLY.map((v, i) => { const w = Math.min(bw - 4, 22), cx = L + bw * i + bw / 2; return `<g class="col" data-i="${i}" tabindex="0"><rect class="hitc" x="${L + bw * i}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/><path class="bar${i === n - 1 ? ' now' : ''}" d="M${cx - w / 2},${y(0)}V${y(v) + 4}a4,4 0 0 1 4,-4h${w - 8}a4,4 0 0 1 4,4V${y(0)}Z"/>${i % 2 === 1 || i === n - 1 ? `<text class="ax" x="${cx}" y="${H - 8}" text-anchor="middle">${DAYS[16 + i].split(' ')[0]}</text>` : ''}</g>`; }).join('')}</svg>`;
+      ${AOG_REPLY.map((v, i) => { const w = Math.min(bw - 4, 18), cx = L + bw * i + bw / 2; return `<g class="col" data-i="${i}" tabindex="0"><rect x="${L + bw * i}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/><path class="bar ${cls(v)}" d="M${cx - w / 2},${y(0)}V${y(v) + 4}a4,4 0 0 1 4,-4h${w - 8}a4,4 0 0 1 4,4V${y(0)}Z"/>${(i % 3 === 0 && n - 1 - i >= 2) || i === n - 1 ? `<text class="ax" x="${cx}" y="${H - 7}" text-anchor="middle">${DAYS[16 + i].split(' ')[0]}</text>` : ''}</g>`; }).join('')}</svg>`;
     el.querySelectorAll('.col').forEach(c => {
-      const show = () => { const i = +c.dataset.i, r = c.getBoundingClientRect(); showTip(`<strong>${DAYS[16 + i]}</strong><span>Median first reply<b>${AOG_REPLY[i]} min</b></span>`, r.left + r.width / 2, r.top + (y(AOG_REPLY[i]) - T) - 6); };
+      const show = () => { const i = +c.dataset.i, r = c.getBoundingClientRect(); showTip(`<strong>${DAYS[16 + i]}</strong><span>Median first reply<b>${AOG_REPLY[i]} min</b></span>${replyBadge(AOG_REPLY[i])}`, r.left + r.width / 2, r.top + (y(AOG_REPLY[i]) - T) - 6); };
       c.addEventListener('pointerenter', show); c.addEventListener('focus', show); c.addEventListener('pointerleave', hideTip); c.addEventListener('blur', hideTip);
     });
   }
 
   function spark(el, k) {
-    const W = el.clientWidth, H = 34; if (!W) return;
-    const s = series(), data = k === 'rev' ? s.a : k === 'ord' ? s.orders : k === 'aog' ? AOG_REPLY : [24, 22, 21, 19, 20, 18, 17, PARTS.filter(p => stock(p) <= 2).length];
-    const mx = Math.max(...data), mn = Math.min(...data), x = i => 2 + (W - 4) * i / (data.length - 1), y = v => 3 + (H - 6) * (1 - (v - mn) / ((mx - mn) || 1));
-    const d = data.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-    el.innerHTML = `<svg width="${W}" height="${H}" aria-hidden="true"><path d="${d}L${x(data.length - 1)},${H}L${x(0)},${H}Z" class="sa"/><path d="${d}" class="sl"/><circle cx="${x(data.length - 1)}" cy="${y(data[data.length - 1])}" r="2.5" class="se"/></svg>`;
+    const W = el.clientWidth, H = 36; if (!W) return;
+    const b = range === '12m' ? { a: REV_M, o: ORD_M } : { a: REV_D, o: ORD_D };
+    const data = k === 'rev' ? b.a : k === 'ord' ? b.o : k === 'aov' ? b.a.map((v, i) => v / b.o[i]) : AOG_REPLY;
+    const mx = Math.max(...data), mn = Math.min(...data), x = i => (W) * i / (data.length - 1), y = v => 4 + (H - 8) * (1 - (v - mn) / ((mx - mn) || 1));
+    const d = data.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(''), id = 'sg' + k;
+    el.innerHTML = `<svg width="${W}" height="${H}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".28"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><path d="${d}L${W},${H}L0,${H}Z" fill="url(#${id})"/><path d="${d}" class="sl"/></svg>`;
   }
 
   function drawCharts() {
@@ -321,6 +377,12 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     drawCharts();
   }
 
+  function exportCsv() {
+    const rows = [['Order', 'Customer', 'Status', 'AOG', 'Items', 'Total AED', 'Placed'], ...state.orders.map(o => [o.id, o.company, o.status, o.aog ? 'yes' : 'no', o.lines.reduce((a, l) => a + l.qty, 0), Math.round(o.total), o.when])];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'sirb-orders.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast(`Exported ${state.orders.length} orders`); }
+    catch (err) { toast('Export is not available in this viewer'); }
+  }
   const toast = msg => {
     const t = root.querySelector('#aToast'); if (!t) return;
     t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2600);
@@ -334,7 +396,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   };
 
   root.addEventListener('click', e => {
-    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload],[data-reset],[data-range],[data-tv],[data-sort],[data-fst],[data-faog],[data-flv],[data-fcs],[data-pg],[data-clear]');
+    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload],[data-reset],[data-range],[data-tv],[data-sort],[data-fst],[data-faog],[data-flv],[data-fcs],[data-pg],[data-clear],[data-metric],[data-golv],[data-export]');
     if (!t || e.target.closest('select,input')) return;
     const d = t.dataset;
     if ('exit' in d) { e.preventDefault(); hideTip(); onExit(); }
@@ -344,6 +406,9 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     else if (d.order) { orderOpen = d.order; keepScroll(render); root.querySelector('.a-drawer [data-closeorder]')?.focus(); }
     else if ('closeorder' in d) { orderOpen = null; keepScroll(render); }
     else if (d.range) { range = d.range; keepScroll(render); }
+    else if (d.metric) { ui.metric = d.metric; keepScroll(render); }
+    else if (d.golv) { ui.stock.level = d.golv; ui.stock.page = 0; view = 'stock'; q = ''; render(); root.querySelector('.a-main').scrollTop = 0; }
+    else if ('export' in d) exportCsv();
     else if (d.tv) { ui.table[d.tv] = !ui.table[d.tv]; keepScroll(render); }
     else if (d.sort) { const [tab, k] = d.sort.split('|'), s = ui[tab]; s.dir = s.sort === k ? -s.dir : (k === 'total' || k === 'ltv' || k === 'qty' || k === 'orders' ? -1 : 1); s.sort = k; keepScroll(render); }
     else if (d.fst) { ui.orders.status = d.fst; keepScroll(render); }
