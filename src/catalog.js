@@ -4,6 +4,8 @@ export const CATS = ['gear', 'engine', 'avionics', 'electrical', 'systems', 'saf
 export const CONDS = ['NE', 'OH', 'SV', 'AR'];
 export const HUBS = ['DXB', 'DWC', 'SHJ'];
 export const DOCS = ['EASA Form 1', 'FAA 8130-3'];
+// As-removed parts are unserviceable, so they never carry a release certificate.
+export const TAG = 'Removal tag';
 export const MAKERS = ['Meridian Aerosystems', 'Northgate Avionics', 'Halden Hydraulics', 'Corvus Power', 'Tessera Propulsion', 'Aldine Safety'];
 
 // model, category, ATA chapter, names, base price (AED), maker, P/N prefix, aircraft groups, rotable?, weight kg, size cm, notes
@@ -65,7 +67,7 @@ F.forEach(([model, cat, ata, en, ar, base, maker, pre, groups, rotable, kg, size
         aed: round50(base * factor * mult),
         qty: Math.max(1, Math.round((kg < 3 ? 22 : 7) * r())),
         from: HUBS[Math.floor(r() * 3)],
-        doc: c === 'AR' ? 'FAA 8130-3' : DOCS[Math.floor(r() * 2)],
+        doc: c === 'AR' ? TAG : DOCS[Math.floor(r() * 2)],
       };
     });
     if (r() < .12) offers.forEach(o => { o.qty = 0; });

@@ -21,7 +21,7 @@ const store = (k, v) => { try { localStorage.setItem('sirb.' + k, JSON.stringify
 
 const S = {
   lang: location.hash === '#ar' ? 'ar' : load('lang', 'en'), cur: load('cur', 'AED'), theme: load('theme', 'dark'),
-  cart: load('cart', {}), saved: load('saved', []), recent: load('recent', []), ship: 'aog', sent: null,
+  cart: load('cart', {}), saved: load('saved', []), recent: load('recent', []), ship: 'exp', sent: null,
   f: { fleet: '', cats: [], conds: [], docs: [], hubs: [], makers: [], inStock: false, q: '', sort: 'rel' }, page: 1, view: load('view', 'grid'),
   pd: null,
 };
@@ -146,18 +146,18 @@ function card(p) {
   const o = bestOffer(p), avail = stock(p), saved = S.saved.includes(p.pn), inq = inCart(p.pn);
   return `<article class="card" data-card="${p.pn}">
     <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn)}"></a>
-    <div class="c-photo"><img src="${photo(p)}" alt="" loading="lazy" decoding="async"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
+    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
     <button type="button" class="heart${saved ? ' on' : ''}" data-save="${p.pn}" aria-label="${esc((saved ? t('saveR') : t('saveA')) + ' ' + p.pn)}" aria-pressed="${saved}">${icon('i-heart', 17)}</button>
     <div class="c-b">
       <div class="c-info">
         <div class="pn" dir="ltr" style="text-align:start">${p.pn}</div>
         <h3>${nameOf(p)}</h3>
         <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi></p>
-        <p class="c-stock${avail ? '' : ' out'}"><i></i>${avail ? `${t('inStock')(avail)}, ${o.from}` : t('out')}</p>
+        <p class="c-stock${avail ? '' : ' out'}"><i></i>${o.qty ? `${t('inStock')(o.qty)}, ${o.from}` : t('out')}</p>
       </div>
       <div class="c-buy">
         <div class="price"><small>${p.offers.length > 1 ? t('from') : '&nbsp;'}</small>${money(o.aed)}</div>
-        <button type="button" class="addbtn${inq ? ' in' : ''}${avail ? '' : ' alt'}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : avail ? t('add') : t('request')) + ' ' + p.pn)}">${buyLabel(inq, avail)}</button>
+        <button type="button" class="addbtn${inq ? ' in' : ''}${avail ? '' : ' alt'}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : avail ? t('add') : t('request')) + ' ' + p.pn + ', ' + t(o.c))}">${buyLabel(inq, avail)}</button>
       </div>
     </div>
   </article>`;
@@ -166,7 +166,8 @@ const buyLabel = (inq, avail) => (inq ? icon('i-check', 15) : '') + `<span>${inq
 function renderGrid() {
   const v = visible(), shown = v.slice(0, S.page * PAGE), g = $('grid');
   g.classList.toggle('as-list', S.view === 'list');
-  g.innerHTML = v.length ? shown.map(card).join('') : `<div class="empty">${t('emptyF')}<br><button class="solid" type="button" id="clearF2">${t('fClear')}</button></div>`;
+  const q = S.f.q.trim();
+  g.innerHTML = v.length ? shown.map(card).join('') : q ? `<div class="empty"><h3>${esc(t('emptyQ2')(q))}</h3><p>${t('emptyQ2s')}</p><div class="row"><button class="solid" type="button" data-source="${esc(q)}">${esc(t('quoteIt')(q.toUpperCase()))}</button><button class="outline" type="button" id="clearF2">${t('fClear')}</button></div></div>` : `<div class="empty">${t('emptyF')}<br><button class="solid" type="button" id="clearF2">${t('fClear')}</button></div>`;
   $('count').textContent = t('results')(v.length);
   const rest = v.length - shown.length;
   $('moreW').innerHTML = rest > 0 ? `<button class="outline" type="button" id="moreBtn">${t('more')(Math.min(rest, PAGE))}</button>` : '';
@@ -188,7 +189,7 @@ function shop(cat) {
 /* ---------- Product page ---------- */
 function openPdp(pn) {
   const p = byPn(pn); if (!p) { closeOverlays(); return; }
-  const first = p.offers.findIndex(o => o.qty); const oi = first < 0 ? 0 : first;
+  const oi = p.offers.indexOf(bestOffer(p));
   S.pd = { pn, oi, type: 'out', qty: 1, view: p.view, tab: 'spec' };
   S.recent = [pn, ...S.recent.filter(x => x !== pn)].slice(0, 9); store('recent', S.recent);
   renderPdp();
@@ -206,7 +207,7 @@ function renderPdp() {
   if (p.hazmat) rows.push([t('sHaz'), t('yes')]);
   const tabs = { spec: () => `<dl class="spec">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd><bdi>${b}</bdi></dd></div>`).join('')}</dl>`,
     fits: () => `<div class="fitg">${p.fits.map(f => `<span><bdi>${fleetName(f)}</bdi></span>`).join('')}</div><p class="tnote">${t('fitsNote')}</p>`,
-    docs: () => `<div class="docg"><button class="certwrap" type="button" data-certopen="${p.pn}|${d.oi}" aria-label="${t('docOpen')}">${certFor(p, o)}</button><div class="docside"><p>${t('docIntro')(o.doc)}</p><button class="outline" type="button" data-certopen="${p.pn}|${d.oi}">${t('docOpen')}</button></div></div>`,
+    docs: () => `<div class="docg"><button class="certwrap" type="button" data-certopen="${p.pn}|${d.oi}" aria-label="${t('docOpen')}">${certFor(p, o)}</button><div class="docside"><p>${o.c === 'AR' ? t('docIntroAR') : t('docIntro')(o.doc)}</p><button class="outline" type="button" data-certopen="${p.pn}|${d.oi}">${t('docOpen')}</button></div></div>`,
     ship: () => `<div class="shiprows">${t('shipRows').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('')}</div>` };
   const similar = PARTS.filter(x => x.cat === p.cat && x.pn !== p.pn && x.model !== p.model).slice(0, 4);
   const recent = S.recent.filter(x => x !== p.pn).map(byPn).filter(Boolean).slice(0, 4);
@@ -219,7 +220,7 @@ function renderPdp() {
       <div class="pd-main">
         <div class="gal">
           <div class="gal-main"><img src="${photo(p, d.view)}" alt="${esc(nameOf(p))}"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
-          <div class="gal-th">${[1, 2, 3].map(v => `<button type="button" data-gal="${v}" aria-pressed="${v === d.view}" aria-label="${v}"><img src="${photo(p, v)}" alt="" loading="lazy"></button>`).join('')}</div>
+          <div class="gal-th">${[1, 2, 3].map(v => `<button type="button" data-gal="${v}" aria-pressed="${v === d.view}" aria-label="${esc(nameOf(p))}, ${v} / 3"><img src="${photo(p, v)}" alt="" loading="lazy"></button>`).join('')}</div>
         </div>
         <div class="pd-info">
           <p class="eyebrow">ATA ${p.ata}, <bdi>${p.maker}</bdi></p>
@@ -392,6 +393,7 @@ const mHead = title => `<div class="m-h"><h2>${title}</h2><button class="ghost" 
 function openBulk(aog) {
   closePalette();
   S.aogFlag = !!aog;
+  if (aog) S.ship = 'aog';
   showModal(`<div class="m-pad">${mHead(aog ? t('aogBtn') : t('bulkT'))}<p class="m-s">${t('bulkS')}</p>
     <textarea class="m-ta" id="bulkTa" spellcheck="false" dir="ltr" aria-label="${t('bulkT')}" placeholder="${PARTS[0].pn}, 2&#10;${PARTS[40].pn}&#10;${PARTS[70].pn}, 8"></textarea>
     <div class="m-act"><button class="solid" type="button" id="bulkGo">${t('bulkGo')}</button></div><div id="bulkRes"></div></div>`);
@@ -430,6 +432,39 @@ function toggleSave(pn) {
   S.saved = S.saved.includes(pn) ? S.saved.filter(x => x !== pn) : [pn, ...S.saved]; store('saved', S.saved); renderCount();
   const on = S.saved.includes(pn);
   document.querySelectorAll(`[data-save="${CSS.escape(pn)}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? t('saveR') : t('saveA')) + ' ' + pn); });
+}
+
+/* ---------- Toast, menu, demo notice ---------- */
+let toastT = 0;
+function toastAdded(p, o) {
+  const el = $('toast');
+  el.innerHTML = `<img src="${photo(p)}" alt=""><div><strong>${t('added')}</strong><span>${esc(nameOf(p))}, ${t(o.c)}, ${money(o.aed)}</span></div><button class="solid small" type="button" data-opencart>${t('viewCart')}</button>`;
+  el.hidden = false; void el.offsetWidth; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(hideToast, 4200);
+}
+function hideToast() { const el = $('toast'); el.classList.remove('on'); clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 300); }
+function renderMenu() {
+  $('menuBody').innerHTML = `<nav class="m-links" aria-label="${t('menu')}">${['navParts', 'navAog', 'navGulf', 'navTrace', 'navFaq'].map((k, i) => `<a href="#${['parts', 'aog', 'gulf', 'trace', 'faq'][i]}" data-mclose-menu>${t(k)}</a>`).join('')}<button type="button" class="m-link" data-mtrack>${t('track')}</button></nav>
+    <div class="m-set">
+      <div><span>${t('lang')}</span><button class="outline" type="button" data-mlang>${t('langBtn')}</button></div>
+      <div><span>${t('cur')}</span><select class="outline" id="menuCur" aria-label="${t('cur')}">${Object.keys(RATES).map(c => `<option${c === S.cur ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div><span>${t('theme')}</span><button class="outline" type="button" data-mtheme>${S.theme === 'light' ? t('themeD') : t('themeL')}</button></div>
+    </div>`;
+}
+function openMenu() { renderMenu(); if (!$('menu').open) $('menu').showModal(); }
+$('menu').addEventListener('click', e => {
+  if (e.target === $('menu') || e.target.closest('[data-mclose-menu]') || e.target.closest('#menuClose')) { $('menu').close(); return; }
+  if (e.target.closest('[data-mlang]')) { $('langBtn').click(); renderMenu(); }
+  else if (e.target.closest('[data-mtheme]')) { $('themeBtn').click(); renderMenu(); }
+  else if (e.target.closest('[data-mtrack]')) { $('menu').close(); openTrack(); }
+});
+$('menu').addEventListener('change', e => { if (e.target.id === 'menuCur') { S.cur = e.target.value; store('cur', S.cur); renderStatic(); renderMenu(); } });
+if (load('demoSeen', 0)) $('demo').hidden = true;
+// Keep the AOG button off the toolbar and the "show more" button it would cover.
+function fabClear() {
+  const fab = $('fab'), y = innerHeight - 84;
+  const hit = ['.bar-top', '#moreW', '.side-actions'].some(sel => { const el = document.querySelector(sel); if (!el || !el.offsetHeight) return false; const r = el.getBoundingClientRect(); return r.top < innerHeight - 8 && r.bottom > y; });
+  fab.classList.toggle('dodge', hit || !$('toast').hidden);
 }
 
 /* ---------- Routes ---------- */
@@ -471,8 +506,9 @@ document.addEventListener('click', e => {
   const d = b.dataset;
   if (d.add) {
     const p = byPn(d.add);
-    if (inCart(d.add)) openDrawer(); else addToCart(d.add);
-    if (p && !stock(p)) openDrawer();
+    if (inCart(d.add)) openDrawer();
+    else if (p && !stock(p)) { addToCart(d.add); openDrawer(); }
+    else { addToCart(d.add); if (p) toastAdded(p, bestOffer(p)); }
   }
   else if (d.save) toggleSave(d.save);
   else if ('fleet' in d) {
@@ -491,7 +527,9 @@ document.addEventListener('click', e => {
   else if (b.id === 'sideClose' || b.id === 'sideApply') $('side').classList.remove('open');
   else if (d.moreq) { S.cart[d.moreq].qty++; saveCart(); renderDrawer(); }
   else if (d.less) { if (--S.cart[d.less].qty < 1) { delete S.cart[d.less]; renderGrid(); } saveCart(); renderDrawer(); }
-  else if ('opencart' in d) { closeOverlaysKeepPd(); openDrawer(); }
+  else if ('opencart' in d) { hideToast(); closeOverlaysKeepPd(); openDrawer(); }
+  else if (b.id === 'menuBtn') openMenu();
+  else if (b.id === 'demoOk') { $('demo').hidden = true; store('demoSeen', 1); }
   else if ('closedrawer' in d) { S.sent = null; $('drawer').close(); leaveOverlayIfPd(); $('parts').scrollIntoView(); }
   else if ('aog' in d) { openBulk(true); }
   else if ('bulk' in d) openBulk(false);
@@ -695,5 +733,5 @@ globe = createGlobe($('globe'), () => globeCities, reduced, () => S.theme === 'l
 $('halo').style.opacity = 1;
 requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('pre')));
 const onScroll = () => $('nav').classList.toggle('solidnav', scrollY > 40 && (scrollY > storyTop + storyLen - 10 || document.documentElement.classList.contains('static')));
-addEventListener('scroll', onScroll, { passive: true }); onScroll();
+addEventListener('scroll', () => { onScroll(); fabClear(); }, { passive: true }); onScroll();
 route();

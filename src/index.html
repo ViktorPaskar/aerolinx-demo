@@ -6,6 +6,19 @@
 <meta name="theme-color" content="#000000">
 <title>SIRB Aero: online aircraft spare parts store in Dubai</title>
 <meta name="description" content="Buy certified aircraft spare parts online. Engine, landing gear, avionics and hydraulics, in stock in Dubai and priced in dirhams.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://viktorpaskar.github.io/sirb-aero/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23000'/%3E%3Cpath fill='%23fff' d='M16 6.5l4.3 6.8-4.3-1.9-4.3 1.9zM9.1 14.5l4.3 6.8-4.3-1.9-4.3 1.9zM22.9 14.5l4.3 6.8-4.3-1.9-4.3 1.9z'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SIRB Aero">
+<meta property="og:title" content="SIRB Aero: aircraft spare parts, ready to fly tonight">
+<meta property="og:description" content="Certified engine, landing gear and avionics parts, priced in dirhams and in stock at Dubai’s airports. Demo store.">
+<meta property="og:url" content="https://viktorpaskar.github.io/sirb-aero/">
+<meta property="og:image" content="https://viktorpaskar.github.io/sirb-aero/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
@@ -19,6 +32,7 @@
   <symbol id="i-sun" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
   <symbol id="i-moon" viewBox="0 0 20 20"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
   <symbol id="i-grid" viewBox="0 0 20 20"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3zM11 11h6v6h-6z" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 20 20"><path d="M3 6.5h14M3 13.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-list" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
   <symbol id="i-chat" viewBox="0 0 20 20"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3A2.5 2.5 0 0 1 3 11.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
   <symbol id="i-logo" viewBox="0 0 28 22"><path d="M14 1.5 19.4 10 14 7.6 8.6 10zM5.4 11.5l5.4 8.5-5.4-2.4L0 20zM22.6 11.5 28 20l-5.4-2.4L17.2 20z" fill="currentColor"/></symbol>
@@ -36,6 +50,7 @@
       <a href="#faq" data-t="navFaq"></a>
     </nav>
     <div class="tools">
+      <button class="ghost icon" id="menuBtn" type="button" aria-haspopup="dialog"><svg width="17" height="17" aria-hidden="true"><use href="#i-menu"/></svg><span class="sr" data-t="menu"></span></button>
       <button class="ghost icon" id="navSearch" type="button"><svg width="17" height="17" aria-hidden="true"><use href="#i-search"/></svg><span class="sr" data-t="search"></span></button>
       <button class="ghost icon" id="savedBtn" type="button"><svg width="17" height="17" aria-hidden="true"><use href="#i-heart"/></svg><span class="sr" data-t="saved"></span><i class="dotc" id="savedDot" hidden></i></button>
       <button class="ghost icon" id="themeBtn" type="button"><svg width="17" height="17" aria-hidden="true"><use id="themeUse" href="#i-sun"/></svg></button>
@@ -54,8 +69,9 @@
       <canvas class="gl" id="gl" aria-hidden="true"></canvas>
       <div class="scrim" id="scrim" aria-hidden="true"></div>
       <div class="hero" id="hero">
-        <h1 data-t="h1" class="breaks"></h1>
-        <p class="lede" data-t="lede"></p>
+        <h1 data-t="h1" class="breaks">Aircraft spare parts,
+ready to fly tonight.</h1>
+        <p class="lede" data-t="lede">Buy certified engine, landing gear and avionics parts online. Priced in dirhams, in stock at Dubai’s airports.</p>
         <button class="searchpill" id="heroSearch" type="button">
           <svg width="18" height="18" aria-hidden="true"><use href="#i-search"/></svg>
           <span data-t="heroSearch"></span>
@@ -172,6 +188,9 @@
 <button class="fab" id="fab" type="button" data-aog><svg width="18" height="18" aria-hidden="true"><use href="#i-chat"/></svg><span data-t="aogFab"></span></button>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="demo" id="demo" role="note"><p data-t="demo"></p><button class="ghost" type="button" id="demoOk" data-t="demoOk"></button></div>
+
 <div class="pdp" id="pdp" tabindex="-1" hidden></div>
 <div id="adminRoot" hidden></div>
 
@@ -191,6 +210,11 @@
     <div class="d-head"><h2 id="dTitle"></h2><button class="ghost" type="button" id="dClose" data-t="close"></button></div>
     <div class="d-body" id="dBody"></div>
   </div>
+</dialog>
+
+<dialog class="sheet" id="menu" aria-labelledby="menuT">
+  <div class="d-head"><h2 id="menuT" data-t="menu"></h2><button class="ghost" type="button" id="menuClose" data-t="close"></button></div>
+  <div id="menuBody"></div>
 </dialog>
 
 <dialog class="modal" id="modal"><div id="modalBody"></div></dialog>

@@ -3,13 +3,18 @@
 const cell = (no, label, val, cls = '') => `<div class="b ${cls}"><span class="bl"><i>${no}</i>${label}</span>${val !== undefined ? `<span class="bv">${val}</span>` : ''}</div>`;
 const sig = `<svg class="sig" viewBox="0 0 150 44" aria-hidden="true"><path d="M4 30c10-16 18-26 22-24 5 3-8 32-4 33 5 1 13-22 18-20 4 2-3 17 2 17 6 0 8-11 13-11 4 0 0 10 5 10 7 0 10-9 16-9 5 0 1 8 7 8 9 0 16-8 28-8 9 0 19 3 31 1" fill="none" stroke="#17306f" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 const statusWord = { NE: 'NEW', OH: 'OVERHAULED', SV: 'INSPECTED / TESTED', AR: 'AS REMOVED' };
+const FAA_REM = {
+  NE: 'NEW PART, PRODUCED UNDER FAA PRODUCTION APPROVAL. CONFORMS TO TYPE DESIGN AND IS IN A CONDITION FOR SAFE OPERATION.',
+  OH: 'OVERHAULED PER CMM CURRENT REVISION. ALL APPLICABLE AIRWORTHINESS DIRECTIVES COMPLIED WITH. NON-INCIDENT STATEMENT ATTACHED.',
+  SV: 'INSPECTED AND TESTED PER CMM CURRENT REVISION. NO INCIDENT HISTORY STATED BY THE LAST OPERATOR.',
+};
 
 export function certEASA(p, o) {
   const tracking = 'SA-' + p.pn.replace(/\D/g, '').slice(0, 6);
   return `<div class="form form-easa" dir="ltr" role="img" aria-label="Specimen EASA Form 1 for ${p.pn}">
     <div class="wm" aria-hidden="true">SPECIMEN</div>
     <div class="fr r3">
-      ${cell(1, 'Approving Competent Authority / Country', 'GCAA / UNITED ARAB EMIRATES')}
+      ${cell(1, 'Approving Competent Authority / Country', 'EASA')}
       <div class="b title"><span class="bl"><i>2</i></span><strong>AUTHORISED RELEASE CERTIFICATE</strong><strong class="sub">EASA FORM 1</strong></div>
       ${cell(3, 'Form Tracking Number', tracking)}
     </div>
@@ -69,7 +74,7 @@ export function certFAA(p, o) {
       ${cell(11, 'Serial / Batch Number', 'SN' + tracking.slice(5))}
       ${cell(12, 'Status / Work', statusWord[o.c])}
     </div>
-    <div class="fr">${cell(13, 'Remarks', 'WORK PERFORMED PER CMM CURRENT REVISION. TESTED AND FOUND SERVICEABLE. NO INCIDENT HISTORY STATED BY THE LAST OPERATOR.', 'rem')}</div>
+    <div class="fr">${cell(13, 'Remarks', FAA_REM[o.c] || FAA_REM.SV, 'rem')}</div>
     <div class="fr r2">
       <div class="b certtxt"><span class="bl"><i>14a</i></span>
         <span class="cb"><i class="box${o.c === 'NE' ? ' x' : ''}"></i>Other regulation specified in Block 13: conformity to approved design data, in condition for safe operation</span></div>
@@ -89,4 +94,28 @@ export function certFAA(p, o) {
   </div>`;
 }
 
-export const certFor = (p, o) => (o.doc === 'FAA 8130-3' ? certFAA : certEASA)(p, o);
+// As-removed parts are unserviceable: no release certificate, only the removal tag and history.
+export function removalTag(p, o) {
+  const tag = 'RT-' + p.pn.replace(/\D/g, '').slice(0, 6);
+  return `<div class="form form-tag" dir="ltr" role="img" aria-label="Specimen removal tag for ${p.pn}">
+    <div class="wm" aria-hidden="true">SPECIMEN</div>
+    <div class="fr r2">
+      <div class="b title"><strong>UNSERVICEABLE PART</strong><strong class="sub">REMOVAL TAG, NOT A RELEASE CERTIFICATE</strong></div>
+      ${cell(1, 'Tag Number', tag)}
+    </div>
+    <div class="fr r3">
+      ${cell(2, 'Description', p.en.toUpperCase())}
+      ${cell(3, 'Part No.', p.pn)}
+      ${cell(4, 'Serial No.', 'SN' + tag.slice(3))}
+    </div>
+    <div class="fr r3">
+      ${cell(5, 'Removed From', p.fits[0] + ' OPERATOR FLEET')}
+      ${cell(6, 'Reason for Removal', 'SCHEDULED REMOVAL, NO FAULT REPORTED')}
+      ${cell(7, 'Status', 'AS REMOVED')}
+    </div>
+    <div class="fr">${cell(8, 'Remarks', 'NOT ELIGIBLE FOR INSTALLATION. REQUIRES INSPECTION, TEST OR OVERHAUL AND A RELEASE CERTIFICATE BY AN APPROVED REPAIR STATION BEFORE USE. NON-INCIDENT STATEMENT AND LAST OPERATOR RECORDS SUPPLIED.', 'rem')}</div>
+    <div class="fr r2">${cell(9, 'Removed By (Name)', 'R. AL HASHIMI')}${cell(10, 'Date (dd/mmm/yyyy)', '06/NOV/2026')}</div>
+  </div>`;
+}
+
+export const certFor = (p, o) => (o.c === 'AR' ? removalTag : o.doc === 'FAA 8130-3' ? certFAA : certEASA)(p, o);
