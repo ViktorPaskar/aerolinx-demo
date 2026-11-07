@@ -19,7 +19,7 @@ export function certEASA(p, o) {
       ${cell(3, 'Form Tracking Number', tracking)}
     </div>
     <div class="fr r2">
-      ${cell(4, 'Organisation Name and Address', 'SIRB AERO FZE<br>DUBAI AIRPORT FREEZONE, DUBAI, U.A.E.', 'tall')}
+      ${cell(4, 'Organisation Name and Address', 'AEROLINX FZE<br>DUBAI AIRPORT FREEZONE, DUBAI, U.A.E.', 'tall')}
       ${cell(5, 'Work Order / Contract / Invoice', 'WO-' + tracking.slice(3), 'tall')}
     </div>
     <div class="fr items">

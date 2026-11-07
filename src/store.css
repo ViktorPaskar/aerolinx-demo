@@ -1216,6 +1216,11 @@ th.num .sortb{flex-direction:row-reverse}
 
 /* Brand accents */
 .logo svg{color:var(--brand)}
+.logo .lw{color:var(--t1);width:121px;height:13px;flex:none}
+.foot .logo .lw{width:140px;height:15px}
+.a-side .logo .mk{color:var(--t1)}
+.a-side .logo span{font-weight:700;letter-spacing:.04em;font-size:14px}
+.a-side .logo em{font-style:normal;font-weight:500;letter-spacing:0;color:var(--t3);margin-left:4px}
 .pd-pn strong,.d1 em{color:var(--brand)}
 .hero-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px}
 .hero-links .textbtn:first-child{color:var(--t1)}
