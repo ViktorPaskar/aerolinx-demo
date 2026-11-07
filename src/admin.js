@@ -105,30 +105,37 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
         <div class="seg" role="group" aria-label="Period">${[['30d', '30 days'], ['12m', '12 months']].map(([k, l]) => `<button data-range="${k}" aria-pressed="${range === k}">${l}</button>`).join('')}</div>
         <button class="a-btn ghost" data-export>${ic('orders', 15)}Export CSV</button></header>
       <div class="kpis">
-        ${kpi('orders', 'c1', 'dash', 'Revenue', fmtM(rev), delta(rev, revP), 'rev', vs)}
-        ${kpi('orders', 'c3', 'orders', 'Orders', ord.toLocaleString('en-US'), delta(ord, ordP), 'ord', vs)}
-        ${kpi('orders', 'c5', 'stock', 'Average order', fmtM(aov), delta(aov, aovP), 'aov', vs)}
-        ${kpi('aog', 'c2', 'clock', 'AOG first reply', '14 min', delta(14, 17, true), 'aog', `median · ${aogOpen.length} open`)}
+        ${kpi('orders', 'n', 'dash', 'Revenue', fmtM(rev), delta(rev, revP), 'rev', vs)}
+        ${kpi('orders', 'n', 'orders', 'Orders', ord.toLocaleString('en-US'), delta(ord, ordP), 'ord', vs)}
+        ${kpi('orders', 'n', 'stock', 'Average order', fmtM(aov), delta(aov, aovP), 'aov', vs)}
+        ${kpi('aog', 'n', 'clock', 'AOG first reply', '14 min', delta(14, 17, true), 'aog', `median · ${aogOpen.length} open`)}
       </div>
       <div class="dgrid">
-        <section class="panel g8"><div class="ph"><div><div class="tabs" role="tablist">${[['rev', 'Revenue'], ['ord', 'Orders']].map(([k, l]) => `<button role="tab" data-metric="${k}" aria-selected="${metricOf() === k}">${l}</button>`).join('')}</div>
+        <section class="panel g12"><div class="ph"><div><div class="tabs" role="tablist">${[['rev', 'Revenue'], ['ord', 'Orders']].map(([k, l]) => `<button role="tab" data-metric="${k}" aria-selected="${metricOf() === k}">${l}</button>`).join('')}</div>
             <p class="pnote">${range === '12m' ? 'By month, last 12 months' : 'By day, last 30 days'}${s.money ? ' · excl. VAT' : ''}</p></div>
           <div class="legend"><span><i class="sw a"></i>This period</span><span><i class="sw b"></i>${s.prevName}</span></div>${tableToggle('rev')}</div>
           ${ui.table.rev ? `<div class="mini-tbl"><table><thead><tr><th>${s.unit === 'month' ? 'Month' : 'Day'}</th><th class="num">This period</th><th class="num">${s.prevName}</th></tr></thead><tbody>${s.labels.map((l, i) => `<tr><td>${l}</td><td class="num">${s.money ? fmt(s.a[i]) : s.a[i]}</td><td class="num">${s.money ? fmt(s.b[i]) : s.b[i]}</td></tr>`).join('')}</tbody></table></div>`
             : `<div class="cv" data-chart="rev" role="img" aria-label="${s.money ? 'Revenue' : 'Orders'} ${range === '12m' ? 'by month' : 'by day'} against the previous period"></div>`}</section>
         <section class="panel g4">${goal(rev)}</section>
-        <section class="panel g4"><div class="ph"><div><h2>Sales by category</h2><p class="pnote">Share of revenue</p></div></div>${catBars(rev)}</section>
-        <section class="panel g4"><div class="ph"><div><h2>Order pipeline</h2><p class="pnote">All orders by step, live</p></div></div>${pipeline()}</section>
-        <section class="panel g4"><div class="ph"><div><h2>AOG first reply</h2><p class="pnote">Median minutes, last 14 days</p></div>${tableToggle('aog')}</div>
-          ${ui.table.aog ? `<div class="mini-tbl"><table><thead><tr><th>Day</th><th class="num">Median reply</th><th>Status</th></tr></thead><tbody>${AOG_REPLY.map((v, i) => `<tr><td>${DAYS[16 + i]}</td><td class="num">${v} min</td><td>${replyBadge(v)}</td></tr>`).join('')}</tbody></table></div>`
-            : `<div class="cv" data-chart="aog" role="img" aria-label="AOG first reply, median minutes per day against a 30 minute target"></div>
-              <div class="legend sm">${dot('good', 'Under 15 min')}${dot('warning', '15–30 min')}${dot('critical', 'Over target')}</div>`}</section>
-        <section class="panel g4"><div class="ph"><div><h2>Stock health</h2><p class="pnote">${PARTS.length} listed parts, live</p></div><button class="tvbtn" data-go="stock">Inventory</button></div>${stockHealth()}${heat()}</section>
-        <section class="panel g4"><div class="ph"><div><h2>Activity</h2><p class="pnote">Last 24 hours</p></div></div>${activity()}</section>
-        <section class="panel g4"><div class="ph"><div><h2>Recent orders</h2><p class="pnote">Click to open</p></div><button class="tvbtn" data-go="orders">All orders</button></div>
-          ${state.orders.slice(0, 6).map(o => `<button class="rowbtn" data-order="${o.id}"><span class="av ${custSlot(o.company)}">${initials(o.company)}</span><span class="rb"><strong>${o.id}${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</strong>${esc(o.company)}</span><span class="r">${badge(o.status)}<small>${fmt(o.total)}</small></span></button>`).join('')}</section>
-        <section class="panel g12"><div class="ph"><div><h2>Top customers</h2><p class="pnote">Lifetime value and order mix</p></div><button class="tvbtn" data-go="people">All customers</button></div>${topCustomers()}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Sales by category</h2><p class="pnote">${range === '12m' ? 'Last 12 months' : 'Last 30 days'}</p></div></div>${catBars(rev)}</section>
+        <section class="panel g4"><div class="ph"><div><h2>Needs attention</h2><p class="pnote">Live</p></div></div>${attention()}</section>
+        <section class="panel g6"><div class="ph"><div><h2>Recent orders</h2><p class="pnote">Click to open</p></div><button class="tvbtn" data-go="orders">All orders</button></div>
+          ${state.orders.slice(0, 6).map(o => `<button class="rowbtn" data-order="${o.id}"><span class="av">${initials(o.company)}</span><span class="rb"><strong>${o.id}${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</strong>${esc(o.company)}</span><span class="r">${badge(o.status)}<small>${fmt(o.total)}</small></span></button>`).join('')}</section>
+        <section class="panel g6"><div class="ph"><div><h2>Activity</h2><p class="pnote">Last 24 hours</p></div></div>${activity()}</section>
       </div>`;
+  }
+
+  function attention() {
+    const aogWait = state.orders.filter(o => o.aog && o.status === 'Received').length, aogOpen = state.orders.filter(o => o.aog && o.status !== 'Delivered').length;
+    const n = { ok: 0, low: 0, out: 0 }; PARTS.forEach(p => { n[level(stock(p))]++; });
+    const certCheck = state.orders.filter(o => o.status === 'Certificate check').length;
+    const rows = [
+      [aogOpen ? 'critical' : 'good', aogOpen ? 'warn' : 'ok', aogOpen ? `${aogOpen} AOG order${aogOpen > 1 ? 's' : ''} open` : 'No AOG orders open', aogWait ? `${aogWait} waiting for a first reply` : 'All replied within target', 'data-go="aog"'],
+      [n.out ? 'critical' : 'good', n.out ? 'x' : 'ok', `${n.out} part${n.out === 1 ? '' : 's'} out of stock`, `${n.low} more running low`, 'data-golv="out"'],
+      ['warning', 'clock', '5 certificates expire soon', 'Within the next 30 days', 'data-gocert="1"'],
+      [certCheck ? 'warning' : 'good', certCheck ? 'certs' : 'ok', `${certCheck} order${certCheck === 1 ? '' : 's'} in certificate check`, 'Paperwork before release', 'data-gost="Certificate check"'],
+    ];
+    return `<div class="attn">${rows.map(([c, i, t, d, go]) => `<button class="at" ${go}><i class="fi ${c}">${ic(i, 14)}</i><span><strong>${t}</strong><small>${d}</small></span><b aria-hidden="true">›</b></button>`).join('')}</div>`;
   }
 
   function goal(rev) {
@@ -136,10 +143,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const hubs = Object.entries(HUB_SHARE);
     return `<div class="ph"><div><h2>${range === '12m' ? 'Annual' : 'Monthly'} target</h2><p class="pnote">${fmtM(g)} revenue goal</p></div></div>
       <div class="goal"><svg viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="${Math.round(k * 100)} percent of target"><circle cx="64" cy="64" r="${r}" class="gtrack"/><circle cx="64" cy="64" r="${r}" class="gfill" stroke-dasharray="${(c * k).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 64 64)"/><text x="64" y="62" text-anchor="middle" class="gpct">${Math.round(k * 100)}%</text><text x="64" y="82" text-anchor="middle" class="gsub">of target</text></svg>
-        <div class="gside"><span>Achieved</span><strong>${fmtM(rev)}</strong><span>Remaining</span><strong>${fmtM(Math.max(g - rev, 0))}</strong><span class="gtag ${k >= .8 ? 'good' : 'warning'}">${ic(k >= .8 ? 'ok' : 'clock', 12)}${k >= .8 ? 'On track' : 'Behind'}</span></div></div>
-      <h3 class="ptl">Revenue by airport</h3>
-      <div class="segbar" role="img" aria-label="${hubs.map(([h, v]) => `${h} ${Math.round(v * 100)}%`).join(', ')}">${hubs.map(([h, v]) => `<span class="c${HUB_SLOT[h]}" style="flex:${v}" tabindex="0" data-tipx="${esc(`${h}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}">${Math.round(v * 100)}%</span>`).join('')}</div>
-      <div class="legend sm">${hubs.map(([h]) => dot('c' + HUB_SLOT[h], h)).join('')}</div>`;
+        <div class="gside"><span>Achieved</span><strong>${fmtM(rev)}</strong><span>Remaining</span><strong>${fmtM(Math.max(g - rev, 0))}</strong><span class="gtag ${k >= .8 ? 'good' : 'warning'}">${ic(k >= .8 ? 'ok' : 'clock', 12)}${k >= .8 ? 'On track' : 'Behind'}</span></div></div>`;
   }
   function pipeline() {
     const n = STATUSES.map(st => state.orders.filter(o => o.status === st).length), tot = Math.max(sum(n), 1);
@@ -149,7 +153,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   }
   function catBars(rev) {
     const rows = Object.entries(CAT_SHARE).sort((a, b) => b[1] - a[1]), max = rows[0][1];
-    return `<div class="hbars">${rows.map(([c, v]) => `<div class="hb" tabindex="0" data-tipx="${esc(`${CAT_NAME[c]}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}"><span class="hl"><i class="c${CAT_SLOT[c]}"></i>${CAT_NAME[c]}</span><span class="ht"><i class="c${CAT_SLOT[c]}" style="width:${v / max * 100}%"></i></span><b>${fmtM(rev * v)}</b></div>`).join('')}</div>`;
+    return `<div class="hbars">${rows.map(([c, v]) => `<div class="hb" tabindex="0" data-tipx="${esc(`${CAT_NAME[c]}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}"><span class="hl">${CAT_NAME[c]}</span><span class="ht"><i style="width:${v / max * 100}%"></i></span><b>${fmtM(rev * v)}</b></div>`).join('')}</div>`;
   }
   const replyBadge = v => v < 15 ? `<span class="sb good">${ic('ok', 12)}Fast</span>` : v <= 30 ? `<span class="sb warning">${ic('clock', 12)}OK</span>` : `<span class="sb critical">${ic('warn', 12)}Late</span>`;
   function stockHealth() {
@@ -169,23 +173,15 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const o = state.orders;
     const items = [
       ['critical', 'warn', `AOG request ${o[0]?.id || ''}`, `${esc(o[0]?.company || '')} · A320 brake`, '18 min'],
-      ['c1', 'orders', `New order ${o[1]?.id || ''}`, `${esc(o[1]?.company || '')} · ${fmt(o[1]?.total || 0)}`, '42 min'],
+      ['n', 'orders', `New order ${o[1]?.id || ''}`, `${esc(o[1]?.company || '')} · ${fmt(o[1]?.total || 0)}`, '42 min'],
       ['good', 'ok', 'Certificate approved', 'EASA Form 1 · CB-7924-22', '1 h'],
-      ['c3', 'dash', 'Payment received', `Oasis Jet MRO · ${fmt(286400)}`, '3 h'],
+      ['n', 'dash', 'Payment received', `Oasis Jet MRO · ${fmt(286400)}`, '3 h'],
       ['warning', 'stock', 'Stock running low', 'GN-8234-06 · 0 left at SHJ', '5 h'],
-      ['c5', 'people', 'New customer', 'Muscat Wings · Airline', '9 h'],
+      ['n', 'people', 'New customer', 'Muscat Wings · Airline', '9 h'],
     ];
     return `<ol class="feed">${items.map(([c, i, t, d, w]) => `<li><i class="fi ${c}">${ic(i, 14)}</i><div><strong>${t}</strong><span>${d}</span></div><time>${w}</time></li>`).join('')}</ol>`;
   }
-  function topCustomers() {
-    const rows = [...CUSTOMERS].sort((a, b) => b[4] - a[4]).slice(0, 6), max = rows[0][4];
-    const mix = name => { const r = rng(name.length * 97); const a = Object.keys(CAT_SLOT).map(k => [k, .3 + r()]); const t = sum(a.map(x => x[1])); return a.map(([k, v]) => [k, v / t]); };
-    return `<div class="mini-tbl"><table><thead><tr><th>Company</th><th>Type</th><th class="num">Orders</th><th class="w30">Lifetime value</th><th class="w30">Category mix</th></tr></thead><tbody>
-      ${rows.map(c => `<tr><td><span class="who"><span class="av ${custSlot(c[0])}">${initials(c[0])}</span><span><strong>${c[0]}</strong><small class="sub">${c[2]}</small></span></span></td><td><span class="tp tp-${slug(c[1])}">${c[1]}</span></td><td class="num">${c[3]}</td>
-        <td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td>
-        <td><span class="segbar mini">${mix(c[0]).map(([k, v]) => `<span class="c${CAT_SLOT[k]}" style="flex:${v}" data-tipx="${esc(`${CAT_NAME[k]}: ${Math.round(v * 100)}%`)}"></span>`).join('')}</span></td></tr>`).join('')}</tbody></table>
-      <div class="legend sm">${Object.keys(CAT_SLOT).map(k => dot('c' + CAT_SLOT[k], CAT_NAME[k])).join('')}</div></div>`;
-  }
+
 
   /* ---------- Orders ---------- */
   function orders() {
@@ -195,6 +191,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     rows = [...rows].sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * s.dir; });
     const count = st => state.orders.filter(o => o.status === st).length, sum = rows.reduce((a, o) => a + o.total, 0);
     return `<header class="a-h"><h1>Orders</h1><input class="a-search" data-q type="search" placeholder="Search order, customer or part" value="${esc(q)}" aria-label="Search orders"></header>
+      <section class="panel strip"><div class="ph"><div><h2>Order pipeline</h2><p class="pnote">All orders by step, live</p></div></div>${pipeline()}</section>
       <div class="fbar">${chip('data-fst', 'all', s.status, 'All', state.orders.length)}${STATUSES.map(st => chip('data-fst', st, s.status, st, count(st))).join('')}
         <button class="fchip hot${s.aog ? ' on' : ''}" data-faog aria-pressed="${s.aog}">${ic('warn', 13)}AOG only</button></div>
       <div class="tbl"><table><thead><tr>${th('orders', 'id', 'Order')}${th('orders', 'company', 'Customer')}${th('orders', 'items', 'Items', 'num')}${th('orders', 'total', 'Total', 'num')}${th('orders', 'placed', 'Placed')}${th('orders', 'status', 'Status')}</tr></thead><tbody>
@@ -207,6 +204,9 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   function aog() {
     const list = state.orders.filter(o => o.aog).sort((a, b) => (a.status === 'Delivered') - (b.status === 'Delivered'));
     return `<header class="a-h"><h1>AOG queue</h1><p class="pnote">Target: first reply within 30 minutes, any hour</p></header>
+      <section class="panel strip"><div class="ph"><div><h2>First reply</h2><p class="pnote">Median minutes per day, last 14 days</p></div>${tableToggle('aog')}</div>
+        ${ui.table.aog ? `<div class="mini-tbl"><table><thead><tr><th>Day</th><th class="num">Median reply</th><th>Status</th></tr></thead><tbody>${AOG_REPLY.map((v, i) => `<tr><td>${DAYS[16 + i]}</td><td class="num">${v} min</td><td>${replyBadge(v)}</td></tr>`).join('')}</tbody></table></div>`
+          : `<div class="cv" data-chart="aog" role="img" aria-label="AOG first reply, median minutes per day against a 30 minute target"></div><div class="legend sm">${dot('good', 'Under 15 min')}${dot('warning', '15–30 min')}${dot('critical', 'Over target')}</div>`}</section>
       <div class="cardsA">${list.map(o => {
         const at = STATUSES.indexOf(o.status), done = o.status === 'Delivered', mins = o.mins ?? 30, late = !done && at === 0 && mins > 30;
         return `<article class="panel aogc${done ? ' done' : ''}"><div class="aogt"><strong>${o.id}</strong>${badge(o.status)}</div>
@@ -228,6 +228,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const page = rows.slice(s.page * PAGE, s.page * PAGE + PAGE);
     const cnt = l => PARTS.filter(p => level(stock(p)) === l).length;
     return `<header class="a-h"><h1>Inventory</h1><input class="a-search" data-q type="search" placeholder="Search part number or name" value="${esc(q)}" aria-label="Search inventory"><button class="a-btn" data-new>Add part</button></header>
+      <div class="strip2"><section class="panel"><div class="ph"><div><h2>Stock health</h2><p class="pnote">${PARTS.length} listed parts, live</p></div></div>${stockHealth()}</section><section class="panel"><div class="ph"><div><h2>Units by airport</h2><p class="pnote">By category, live</p></div></div>${heat().replace('<h3 class="ptl">Units by airport and category</h3>', '')}</section></div>
       <div class="fbar">${chip('data-flv', 'all', s.level, 'All', PARTS.length)}${chip('data-flv', 'ok', s.level, 'In stock', cnt('ok'))}${chip('data-flv', 'low', s.level, 'Low', cnt('low'))}${chip('data-flv', 'out', s.level, 'Out', cnt('out'))}
         <select class="fsel" data-fcat aria-label="Category"><option value="all">All categories</option>${CATS.map(c => `<option value="${c}"${s.cat === c ? ' selected' : ''}>${CAT_NAME[c]}</option>`).join('')}</select>
         <span class="pnote fhint">Edits show in the store straight away.</span></div>
@@ -396,7 +397,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   };
 
   root.addEventListener('click', e => {
-    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload],[data-reset],[data-range],[data-tv],[data-sort],[data-fst],[data-faog],[data-flv],[data-fcs],[data-pg],[data-clear],[data-metric],[data-golv],[data-export]');
+    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload],[data-reset],[data-range],[data-tv],[data-sort],[data-fst],[data-faog],[data-flv],[data-fcs],[data-pg],[data-clear],[data-metric],[data-golv],[data-export],[data-gost],[data-gocert]');
     if (!t || e.target.closest('select,input')) return;
     const d = t.dataset;
     if ('exit' in d) { e.preventDefault(); hideTip(); onExit(); }
@@ -407,6 +408,8 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     else if ('closeorder' in d) { orderOpen = null; keepScroll(render); }
     else if (d.range) { range = d.range; keepScroll(render); }
     else if (d.metric) { ui.metric = d.metric; keepScroll(render); }
+    else if (d.gost) { ui.orders.status = d.gost; ui.orders.aog = false; view = 'orders'; q = ''; render(); root.querySelector('.a-main').scrollTop = 0; }
+    else if (d.gocert) { ui.certs.st = 'Expires in 30 days'; view = 'certs'; q = ''; render(); root.querySelector('.a-main').scrollTop = 0; }
     else if (d.golv) { ui.stock.level = d.golv; ui.stock.page = 0; view = 'stock'; q = ''; render(); root.querySelector('.a-main').scrollTop = 0; }
     else if ('export' in d) exportCsv();
     else if (d.tv) { ui.table[d.tv] = !ui.table[d.tv]; keepScroll(render); }
