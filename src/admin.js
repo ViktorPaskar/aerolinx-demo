@@ -48,7 +48,7 @@ const DAYS = [], REV_D = [], REV_D_PREV = [], ORD_D = [];
 const AOG_REPLY = [19, 16, 22, 14, 12, 17, 15, 13, 11, 18, 14, 12, 10, 14]; // median minutes, last 14 days
 const CAT_SHARE = { engine: .31, avionics: .24, gear: .19, systems: .13, electrical: .08, safety: .05 };
 
-const NAV = [['dash', 'Dashboard'], ['orders', 'Orders'], ['aog', 'AOG queue'], ['stock', 'Inventory'], ['certs', 'Certificates'], ['people', 'Customers'], ['settings', 'Settings']];
+const NAV = [['dash', 'Dashboard'], ['Sales'], ['orders', 'Orders'], ['aog', 'AOG queue'], ['people', 'Customers'], ['Catalogue'], ['stock', 'Inventory'], ['certs', 'Certificates'], ['System'], ['settings', 'Settings']];
 const ICON = {
   dash: 'M3 3h6v8H3zM11 3h6v5h-6zM11 10h6v7h-6zM3 13h6v4H3z',
   orders: 'M4 3h12v14H4zM7 7h6M7 10h6M7 13h4',
@@ -57,9 +57,26 @@ const ICON = {
   certs: 'M5 2h7l3 3v13H5zM12 2v3h3M8 9h4M8 12h4',
   people: 'M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 17c0-3 2-5 5-5s5 2 5 5M13 4a3 3 0 0 1 0 5.6M14.5 12c2 .6 3.5 2.4 3.5 5',
   settings: 'M3 6h8M15 6h2M3 14h2M9 14h8M13 4v4M7 12v4',
+  plane: 'M10 2.5c.6 0 1 .7 1 1.6v4l5.5 3.2v1.5L11 11v3.6l1.6 1.2v1.3L10 16.5l-2.6.6v-1.3L9 14.6V11l-5.5 1.8v-1.5L9 8.1v-4c0-.9.4-1.6 1-1.6z',
+  wrench: 'M12.5 3.2a4 4 0 0 0-4.8 5.3L3.2 13a1.6 1.6 0 0 0 2.3 2.3l4.5-4.5a4 4 0 0 0 5.3-4.8l-2.4 2.4-2.1-.4-.4-2.1z',
+  box: 'M10 2.8 3.5 6v8L10 17.2 16.5 14V6zM3.5 6 10 9.2 16.5 6M10 9.2v8',
+  jet: 'M2.5 11.5 16 7.8a1.6 1.6 0 0 1 .9 3l-3 1.2-4.6 4h-1.8l2.4-3.2-4.5 1.6-1.6 1.4H2.6l1.2-2.6z',
+  bolt: 'M11 2.5 4.5 11h4.6l-.8 6.5L15 9h-4.6z',
+  pin: 'M10 17.5s-5-4.4-5-8.5a5 5 0 0 1 10 0c0 4.1-5 8.5-5 8.5zM10 7.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z',
+  tag: 'M2.8 10 6.6 5.5h9.1a.8.8 0 0 1 .8.8v7.4a.8.8 0 0 1-.8.8H6.6zM7.2 9.2a.8.8 0 1 1 0 1.6.8.8 0 0 1 0-1.6z',
+  user: 'M10 9.5a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM3.8 17c.5-3 3-5 6.2-5s5.7 2 6.2 5',
+  cal: 'M3.5 5h13v11.5h-13zM3.5 8.5h13M7 3v3.5M13 3v3.5',
+  hash: 'M7.5 3 6 17M14 3l-1.5 14M3.5 7.5h13M3 12.5h13',
+  coin: 'M10 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM12.4 7.6c-.5-.7-1.3-1-2.4-1-1.4 0-2.3.7-2.3 1.7 0 2.4 4.8 1.2 4.8 3.6 0 1-1 1.7-2.5 1.7-1.2 0-2.1-.4-2.6-1.2M10 5.2v1.4M10 13.6V15',
+  spark: 'M10 2.5l1.6 4.6 4.9 1.6-4.9 1.6L10 15l-1.6-4.7-4.9-1.6 4.9-1.6zM15.5 13.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z',
+  list: 'M7 5h10M7 10h10M7 15h10M3.5 5h.1M3.5 10h.1M3.5 15h.1',
+  route: 'M5 16.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM15 7.1a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM6.8 14.7h5.7a2.6 2.6 0 0 0 0-5.2h-5a2.6 2.6 0 0 1 0-5.2h5.7',
+  bell: 'M5 13.5V9a5 5 0 0 1 10 0v4.5l1.5 1.5h-13zM8.2 17a1.9 1.9 0 0 0 3.6 0',
   up: 'M5 12 10 7l5 5', down: 'M5 8l5 5 5-5', ok: 'M4.5 10.5 8.3 14.3 15.5 6', warn: 'M10 3 18 17H2zM10 8v4M10 14.4v.2', x: 'M5 5l10 10M15 5 5 15', clock: 'M10 3a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM10 6v4l3 2',
 };
 const ic = (k, s = 16) => `<svg viewBox="0 0 20 20" width="${s}" height="${s}" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+const csym = (c, sz = 18) => `<svg width="${sz}" height="${sz}" aria-hidden="true"><use href="#i-c-${c}"/></svg>`;
+const TYPE_ICON = { Airline: 'plane', MRO: 'wrench', 'Cargo airline': 'box', 'Business aviation': 'jet' };
 const niceMax = v => { const p = Math.pow(10, Math.floor(Math.log10(v || 1))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; };
 
 export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
@@ -88,6 +105,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     return { ...base, money: true };
   };
   const sum = a => a.reduce((x, y) => x + y, 0);
+  const T = (icon, text) => `<h2 class="pt2"><i class="pti">${ic(icon, 15)}</i>${text}</h2>`;
   const dot = (cls, label) => `<span class="ldot"><i class="${cls}"></i>${label}</span>`;
   const STAGE_SLOT = STATUSES.map((_, i) => 'c' + (i + 1));
   const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('');
@@ -114,7 +132,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
         <section class="panel dhero g8">
           <div class="hero-top"><div class="pills" role="tablist">${[['rev', 'Revenue'], ['ord', 'Orders']].map(([k, l]) => `<button role="tab" data-metric="${k}" aria-selected="${metricOf() === k}">${l}</button>`).join('')}</div>
             <div class="pills" role="group" aria-label="Period">${[['30d', '1M'], ['12m', '1Y']].map(([k, l]) => `<button data-range="${k}" aria-pressed="${range === k}">${l}</button>`).join('')}</div></div>
-          <p class="hero-l">${money ? 'Revenue' : 'Orders'} · ${range === '12m' ? 'last 12 months' : 'last 30 days'}${money ? ', excl. VAT' : ''}</p>
+          <p class="hero-l">${ic(money ? 'coin' : 'orders', 14)}${money ? 'Revenue' : 'Orders'} · ${range === '12m' ? 'last 12 months' : 'last 30 days'}${money ? ', excl. VAT' : ''}</p>
           <div class="hero-n">${big(heroV, money)}</div>
           <div class="hero-d">${delta(heroV, heroP)}<span>${money ? fmtM(Math.abs(heroV - heroP)) : Math.abs(heroV - heroP)} ${heroV >= heroP ? 'more' : 'less'} than ${s.prevName.toLowerCase()}</span>${tableToggle('rev')}</div>
           ${ui.table.rev ? `<div class="mini-tbl"><table><thead><tr><th>${s.unit === 'month' ? 'Month' : 'Day'}</th><th class="num">This period</th><th class="num">${s.prevName}</th></tr></thead><tbody>${s.labels.map((l, i) => `<tr><td>${l}</td><td class="num">${s.money ? fmt(s.a[i]) : s.a[i]}</td><td class="num">${s.money ? fmt(s.b[i]) : s.b[i]}</td></tr>`).join('')}</tbody></table></div>`
@@ -123,17 +141,17 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
         </section>
         <div class="g4 stack">
           <section class="panel">${goal(rev)}</section>
-          <section class="panel insights"><h2>Insights</h2>${insights(rev, revP)}</section>
+          <section class="panel insights">${T('spark', 'Insights')}${insights(rev, revP)}</section>
         </div>
         <div class="g12 kpis k3">
           ${mini('orders', 'orders', 'Orders', ord.toLocaleString('en-US'), delta(ord, ordP), 'ord')}
           ${mini('orders', 'stock', 'Average order', fmtM(aov), delta(aov, aovP), 'aov')}
           ${mini('aog', 'clock', 'AOG first reply', '14 min', delta(14, 17, true), 'aog')}
         </div>
-        <section class="panel g6"><div class="ph"><div><h2>Sales by category</h2><p class="pnote">${range === '12m' ? 'Last 12 months' : 'Last 30 days'}</p></div></div>${catDonut(rev)}</section>
-        <section class="panel g6"><div class="ph"><div><h2>Needs attention</h2><p class="pnote">${aogOpen.length ? `${aogOpen.length} AOG open` : 'All clear'}</p></div></div>${attention()}</section>
-        <section class="panel g6"><div class="ph"><div><h2>Recent orders</h2></div><button class="tvbtn" data-go="orders">See all</button></div>${txList()}</section>
-        <section class="panel g6"><div class="ph"><div><h2>Activity</h2><p class="pnote">Last 24 hours</p></div></div>${activity()}</section>
+        <section class="panel g6"><div class="ph"><div>${T('coin', 'Sales by category')}<p class="pnote">${range === '12m' ? 'Last 12 months' : 'Last 30 days'}</p></div></div>${catDonut(rev)}</section>
+        <section class="panel g6"><div class="ph"><div>${T('bell', 'Needs attention')}<p class="pnote">${aogOpen.length ? `${aogOpen.length} AOG open` : 'All clear'}</p></div></div>${attention()}</section>
+        <section class="panel g6"><div class="ph"><div>${T('orders', 'Recent orders')}</div><button class="tvbtn" data-go="orders">See all</button></div>${txList()}</section>
+        <section class="panel g6"><div class="ph"><div>${T('clock', 'Activity')}<p class="pnote">Last 24 hours</p></div></div>${activity()}</section>
       </div>`;
   }
 
@@ -154,13 +172,13 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     let off = 0;
     const arcs = rows.map(([c, v]) => { const len = Math.max(C * v - gap, 0); const el = `<circle cx="80" cy="80" r="${R}" class="arc c${CAT_SLOT[c]}" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 80 80)" tabindex="0" data-tipx="${esc(`${CAT_NAME[c]}: ${fmt(rev * v)} · ${Math.round(v * 100)}%`)}"/>`; off += C * v; return el; }).join('');
     return `<div class="donut"><svg viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="${rows.map(([c, v]) => `${CAT_NAME[c]} ${Math.round(v * 100)}%`).join(', ')}">${arcs}<text x="80" y="76" text-anchor="middle" class="dt">${fmtM(rev)}</text><text x="80" y="96" text-anchor="middle" class="ds">total</text></svg>
-      <ul class="dl2">${rows.map(([c, v]) => `<li><i class="cdot c${CAT_SLOT[c]}"></i><span>${CAT_NAME[c]}</span><b>${fmtM(rev * v)}</b><em>${Math.round(v * 100)}%</em></li>`).join('')}</ul></div>`;
+      <ul class="dl2">${rows.map(([c, v]) => `<li><i class="cico c${CAT_SLOT[c]}">${csym(c, 22)}</i><span>${CAT_NAME[c]}</span><b>${fmtM(rev * v)}</b><em>${Math.round(v * 100)}%</em></li>`).join('')}</ul></div>`;
   }
 
   function txList() {
     const groups = {};
     state.orders.slice(0, 7).forEach(o => { const g = /min|h ago|Just/.test(o.when) ? 'Today' : o.when === 'Yesterday' ? 'Yesterday' : 'Earlier'; (groups[g] ||= []).push(o); });
-    return Object.entries(groups).map(([g, list]) => `<p class="txg">${g}</p>${list.map(o => `<button class="tx" data-order="${o.id}"><span class="av">${initials(o.company)}</span><span class="rb"><strong>${esc(o.company)}</strong><small>${o.id} · ${badge(o.status)}${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</small></span><span class="amt">${fmt(o.total)}<small>${esc(o.when)}</small></span></button>`).join('')}`).join('');
+    return Object.entries(groups).map(([g, list]) => `<p class="txg">${g}</p>${list.map(o => { const p = PARTS.find(x => x.pn === o.lines[0]?.pn); return `<button class="tx" data-order="${o.id}"><span class="cico lg c${p ? CAT_SLOT[p.cat] : 1}">${p ? csym(p.cat, 26) : ic('box', 18)}</span><span class="rb"><strong>${esc(o.company)}${o.aog ? ' <span class="st st-hot">' + ic('bolt', 11) + 'AOG</span>' : ''}</strong><small>${esc(p ? p.en : o.lines[0]?.name || '')} · ${o.id}</small></span><span class="amt">${fmt(o.total)}<small>${badge(o.status)}</small></span></button>`; }).join('')}`).join('');
   }
 
   function attention() {
@@ -227,11 +245,11 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     rows = [...rows].sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * s.dir; });
     const count = st => state.orders.filter(o => o.status === st).length, sum = rows.reduce((a, o) => a + o.total, 0);
     return `<header class="a-h"><h1>Orders</h1><input class="a-search" data-q type="search" placeholder="Search order, customer or part" value="${esc(q)}" aria-label="Search orders"></header>
-      <section class="panel strip"><div class="ph"><div><h2>Order pipeline</h2><p class="pnote">All orders by step, live</p></div></div>${pipeline()}</section>
+      <section class="panel strip"><div class="ph"><div>${T('route', 'Order pipeline')}<p class="pnote">All orders by step, live</p></div></div>${pipeline()}</section>
       <div class="fbar">${chip('data-fst', 'all', s.status, 'All', state.orders.length)}${STATUSES.map(st => chip('data-fst', st, s.status, st, count(st))).join('')}
         <button class="fchip hot${s.aog ? ' on' : ''}" data-faog aria-pressed="${s.aog}">${ic('warn', 13)}AOG only</button></div>
       <div class="tbl"><table><thead><tr>${th('orders', 'id', 'Order')}${th('orders', 'company', 'Customer')}${th('orders', 'items', 'Items', 'num')}${th('orders', 'total', 'Total', 'num')}${th('orders', 'placed', 'Placed')}${th('orders', 'status', 'Status')}</tr></thead><tbody>
-      ${rows.map(o => `<tr data-order="${o.id}" tabindex="0"><td><strong>${o.id}</strong>${o.aog ? ' <span class="st st-hot">AOG</span>' : ''}</td><td>${esc(o.company)}<small class="sub">${esc(o.lines[0]?.pn || '')}</small></td><td class="num">${o.lines.reduce((a, l) => a + l.qty, 0)}</td><td class="num">${fmt(o.total)}</td><td>${esc(o.when)}</td>
+      ${rows.map(o => `<tr data-order="${o.id}" tabindex="0"><td><strong>${o.id}</strong>${o.aog ? ' <span class="st st-hot">' + ic('bolt', 11) + 'AOG</span>' : ''}</td><td><span class="who"><i class="tico">${ic(TYPE_ICON[(CUSTOMERS.find(c => c[0] === o.company) || [, 'Airline'])[1]] || 'user', 15)}</i><span>${esc(o.company)}<small class="sub">${esc(o.lines[0]?.pn || '')}</small></span></span></td><td class="num">${o.lines.reduce((a, l) => a + l.qty, 0)}</td><td class="num">${fmt(o.total)}</td><td><span class="meta">${ic('clock', 13)}${esc(o.when)}</span></td>
         <td><select data-status="${o.id}" aria-label="Status of ${o.id}">${STATUSES.map(st => `<option${st === o.status ? ' selected' : ''}>${st}</option>`).join('')}</select></td></tr>`).join('') || `<tr><td colspan="6" class="none">No orders match. <button class="a-link" data-clear>Clear filters</button></td></tr>`}
       </tbody>${rows.length ? `<tfoot><tr><td colspan="3">${rows.length} order${rows.length === 1 ? '' : 's'}</td><td class="num">${fmt(sum)}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div>`;
   }
@@ -240,13 +258,13 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   function aog() {
     const list = state.orders.filter(o => o.aog).sort((a, b) => (a.status === 'Delivered') - (b.status === 'Delivered'));
     return `<header class="a-h"><h1>AOG queue</h1><p class="pnote">Target: first reply within 30 minutes, any hour</p></header>
-      <section class="panel strip"><div class="ph"><div><h2>First reply</h2><p class="pnote">Median minutes per day, last 14 days</p></div>${tableToggle('aog')}</div>
+      <section class="panel strip"><div class="ph"><div>${T('clock', 'First reply')}<p class="pnote">Median minutes per day, last 14 days</p></div>${tableToggle('aog')}</div>
         ${ui.table.aog ? `<div class="mini-tbl"><table><thead><tr><th>Day</th><th class="num">Median reply</th><th>Status</th></tr></thead><tbody>${AOG_REPLY.map((v, i) => `<tr><td>${DAYS[16 + i]}</td><td class="num">${v} min</td><td>${replyBadge(v)}</td></tr>`).join('')}</tbody></table></div>`
           : `<div class="cv" data-chart="aog" role="img" aria-label="AOG first reply, median minutes per day against a 30 minute target"></div><div class="legend sm">${dot('good', 'Under 15 min')}${dot('warning', '15–30 min')}${dot('critical', 'Over target')}</div>`}</section>
       <div class="cardsA">${list.map(o => {
         const at = STATUSES.indexOf(o.status), done = o.status === 'Delivered', mins = o.mins ?? 30, late = !done && at === 0 && mins > 30;
         return `<article class="panel aogc${done ? ' done' : ''}"><div class="aogt"><strong>${o.id}</strong>${badge(o.status)}</div>
-          <p class="aogco">${esc(o.company)}</p><p class="pnote">${o.lines.map(l => `${l.qty} × ${l.pn}, ${esc(l.name)}`).join('<br>')}</p>
+          <ul class="kv"><li>${ic(TYPE_ICON[(CUSTOMERS.find(c => c[0] === o.company) || [, 'Airline'])[1]] || 'user', 14)}<span>${esc(o.company)}</span></li>${o.lines.map(l => { const p = PARTS.find(x => x.pn === l.pn); return `<li>${p ? csym(p.cat, 14) : ic('box', 14)}<span>${l.qty} × ${esc(l.name)} <small>${l.pn}</small></span></li>`; }).join('')}<li>${ic('coin', 14)}<span>${fmt(o.total)}</span></li></ul>
           <div class="sla${late ? ' late' : ''}">${ic('clock', 14)}${done ? 'Closed' : at === 0 ? `Waiting ${mins} min${late ? ' · over target' : ''}` : 'Replied · in progress'}</div>
           <ol class="steps">${STATUSES.map((s, i) => `<li class="${i <= at ? 'on' : ''}" title="${s}"></li>`).join('')}</ol>
           <div class="acts"><button class="a-btn" data-advance="${o.id}" ${done ? 'disabled' : ''}>${done ? 'Delivered' : `Move to ${STATUSES[at + 1]}`}</button><button class="a-btn ghost" data-order="${o.id}">Open</button></div></article>`;
@@ -264,13 +282,13 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const page = rows.slice(s.page * PAGE, s.page * PAGE + PAGE);
     const cnt = l => PARTS.filter(p => level(stock(p)) === l).length;
     return `<header class="a-h"><h1>Inventory</h1><input class="a-search" data-q type="search" placeholder="Search part number or name" value="${esc(q)}" aria-label="Search inventory"><button class="a-btn" data-new>Add part</button></header>
-      <div class="strip2"><section class="panel"><div class="ph"><div><h2>Stock health</h2><p class="pnote">${PARTS.length} listed parts, live</p></div></div>${stockHealth()}</section><section class="panel"><div class="ph"><div><h2>Units by airport</h2><p class="pnote">By category, live</p></div></div>${heat().replace('<h3 class="ptl">Units by airport and category</h3>', '')}</section></div>
+      <div class="strip2"><section class="panel"><div class="ph"><div>${T('stock', 'Stock health')}<p class="pnote">${PARTS.length} listed parts, live</p></div></div>${stockHealth()}</section><section class="panel"><div class="ph"><div>${T('pin', 'Units by airport')}<p class="pnote">By category, live</p></div></div>${heat().replace('<h3 class="ptl">Units by airport and category</h3>', '')}</section></div>
       <div class="fbar">${chip('data-flv', 'all', s.level, 'All', PARTS.length)}${chip('data-flv', 'ok', s.level, 'In stock', cnt('ok'))}${chip('data-flv', 'low', s.level, 'Low', cnt('low'))}${chip('data-flv', 'out', s.level, 'Out', cnt('out'))}
         <select class="fsel" data-fcat aria-label="Category"><option value="all">All categories</option>${CATS.map(c => `<option value="${c}"${s.cat === c ? ' selected' : ''}>${CAT_NAME[c]}</option>`).join('')}</select>
         <span class="pnote fhint">Edits show in the store straight away.</span></div>
       <div class="tbl"><table><thead><tr><th></th>${th('stock', 'pn', 'Part')}<th>Condition</th><th>Location</th><th>Certificate</th>${th('stock', 'qty', 'Qty')}${th('stock', 'price', 'Price, AED')}<th>Level</th></tr></thead><tbody>
-      ${page.map(p => p.offers.map((o, i) => `<tr class="${i === 0 ? 'grp' : ''}">${i === 0 ? `<td rowspan="${p.offers.length}" class="th"><img src="${photo(p)}" alt="" loading="lazy"></td><td rowspan="${p.offers.length}"><strong>${p.pn}</strong><small class="sub">${esc(p.en)}</small></td>` : ''}
-        <td><span class="cond c-${o.c}"><i></i>${o.c}</span></td><td>${o.from}</td><td>${o.doc}</td>
+      ${page.map(p => p.offers.map((o, i) => `<tr class="${i === 0 ? 'grp' : ''}">${i === 0 ? `<td rowspan="${p.offers.length}" class="th"><img src="${photo(p)}" alt="" loading="lazy"></td><td rowspan="${p.offers.length}"><strong>${p.pn}</strong><small class="sub"><span class="meta">${csym(p.cat, 13)}${esc(p.en)}</span></small></td>` : ''}
+        <td><span class="cond c-${o.c}"><i></i>${o.c}</span></td><td><span class="meta">${ic('pin', 13)}${o.from}</span></td><td><span class="meta">${ic('tag', 13)}${o.doc}</span></td>
         <td><input class="num-in" type="number" min="0" value="${o.qty}" data-qty="${p.pn}|${i}" aria-label="Quantity of ${p.pn} ${o.c}"></td>
         <td><input class="num-in wide" type="number" min="0" step="50" value="${o.aed}" data-price="${p.pn}|${i}" aria-label="Price of ${p.pn} ${o.c}"></td>
         ${i === 0 ? `<td rowspan="${p.offers.length}">${lvl(stock(p))}</td>` : ''}</tr>`).join('')).join('') || `<tr><td colspan="8" class="none">No parts match. <button class="a-link" data-clear>Clear filters</button></td></tr>`}
@@ -288,7 +306,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     return `<header class="a-h"><h1>Certificates</h1><button class="a-btn" data-upload>Upload certificate</button></header>
       <div class="ctiles">${[['all', 'All documents', all.length, 'certs'], ['Approved', 'Approved', n('Approved'), 'ok'], ['Waiting for review', 'Waiting for review', n('Waiting for review'), 'clock'], ['Expires in 30 days', 'Expiring soon', n('Expires in 30 days'), 'warn']].map(([k, l, v, i]) => `<button class="ctl${ui.certs.st === k ? ' on' : ''}" data-fcs="${k}" aria-pressed="${ui.certs.st === k}">${ic(i, 18)}<span>${l}</span><strong>${v}</strong></button>`).join('')}</div>
       <div class="tbl"><table><thead><tr><th>Part</th><th>Document</th><th>Issued</th><th>Status</th><th></th></tr></thead><tbody>
-      ${rows.map(({ p, st, doc, day }) => `<tr><td><strong>${p.pn}</strong><small class="sub">${esc(p.en)}</small></td><td>${doc}</td><td>${String(day).padStart(2, '0')} Oct 2026</td><td>${badge(st)}</td><td class="r"><a class="a-link" href="#p-${p.pn}">View part</a></td></tr>`).join('')}
+      ${rows.map(({ p, st, doc, day }) => `<tr><td><strong>${p.pn}</strong><small class="sub">${esc(p.en)}</small></td><td><span class="meta">${ic('certs', 13)}${doc}</span></td><td><span class="meta">${ic('cal', 13)}${String(day).padStart(2, '0')} Oct 2026</span></td><td>${badge(st)}</td><td class="r"><a class="a-link" href="#p-${p.pn}">View part</a></td></tr>`).join('')}
       </tbody></table></div>`;
   }
 
@@ -299,7 +317,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const rows = CUSTOMERS.filter(c => !q || (c[0] + c[1] + c[2]).toLowerCase().includes(q)).sort((a, b) => { const x = key(a), y = key(b); return (x > y ? 1 : x < y ? -1 : 0) * s.dir; });
     return `<header class="a-h"><h1>Customers</h1><input class="a-search" data-q type="search" placeholder="Search customers" value="${esc(q)}" aria-label="Search customers"></header>
       <div class="tbl"><table><thead><tr>${th('people', 'name', 'Company')}${th('people', 'type', 'Type')}<th>Location</th>${th('people', 'orders', 'Orders', 'num')}${th('people', 'ltv', 'Lifetime value', 'w30')}<th>Terms</th></tr></thead><tbody>
-      ${rows.map(c => `<tr><td><span class="who"><span class="av ${custSlot(c[0])}">${initials(c[0])}</span><strong>${c[0]}</strong></span></td><td><span class="tp tp-${slug(c[1])}">${c[1]}</span></td><td>${c[2]}</td><td class="num">${c[3]}</td><td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td><td>${c[3] > 25 ? '30-day account' : 'Bank transfer'}</td></tr>`).join('') || '<tr><td colspan="6" class="none">No customers match.</td></tr>'}
+      ${rows.map(c => `<tr><td><span class="who"><span class="av ${custSlot(c[0])}">${initials(c[0])}</span><strong>${c[0]}</strong></span></td><td><span class="tp tp-${slug(c[1])}">${ic(TYPE_ICON[c[1]] || 'user', 12)}${c[1]}</span></td><td><span class="meta">${ic('pin', 13)}${c[2]}</span></td><td class="num">${c[3]}</td><td><span class="cellbar"><i style="width:${c[4] / max * 100}%"></i><b>${fmtM(c[4])}</b></span></td><td>${c[3] > 25 ? '30-day account' : 'Bank transfer'}</td></tr>`).join('') || '<tr><td colspan="6" class="none">No customers match.</td></tr>'}
       </tbody></table></div>`;
   }
 
@@ -307,13 +325,13 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const s = state.settings;
     const tog = (k, l, d) => `<label class="tog"><span><strong>${l}</strong><em>${d}</em></span><input type="checkbox" role="switch" data-set="${k}" ${s[k] ? 'checked' : ''}></label>`;
     return `<header class="a-h"><h1>Settings</h1></header>
-      <section class="panel setp"><h2>Store</h2>
+      <section class="panel setp">${T('settings', 'Store')}
         ${tog('aogDesk', 'AOG desk open', 'Show the AOG desk as available around the clock')}
         ${tog('usd', 'Show prices in other currencies', 'Let buyers switch from AED to USD, EUR or SAR')}
         ${tog('bulk', 'Bulk parts list', 'Let buyers paste a list of part numbers')}
         <label class="fld">VAT rate, %<input class="num-in wide" type="number" value="${s.vat}" data-setn="vat" min="0" max="100"></label>
       </section>
-      <section class="panel setp" style="margin-top:12px"><h2>Demo data</h2><div class="fld"><span><strong>Reset the demo</strong><em class="sub">Restores sample orders, stock and settings</em></span><button class="a-btn ghost" data-reset>Reset demo data</button></div></section>`;
+      <section class="panel setp" style="margin-top:12px">${T('dash', 'Demo data')}<div class="fld"><span><strong>Reset the demo</strong><em class="sub">Restores sample orders, stock and settings</em></span><button class="a-btn ghost" data-reset>Reset demo data</button></div></section>`;
   }
 
   const views = { dash, orders, aog, stock: stockV, certs, people, settings };
@@ -323,11 +341,12 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     const at = STATUSES.indexOf(o.status);
     return `<div class="a-scrim" data-closeorder></div><aside class="a-drawer" role="dialog" aria-label="Order ${o.id}"><div class="ad-h"><div><h2>${o.id}</h2><p class="pnote">${esc(o.company)} · ${esc(o.when)}</p></div><button class="a-btn ghost" data-closeorder>Close</button></div>
       ${o.aog ? `<p class="aogflag">${ic('warn', 14)}Aircraft on ground · reply target 30 min</p>` : ''}
+      <dl class="kvg"><div><dt>${ic('user', 13)}Customer</dt><dd>${esc(o.company)}</dd></div><div><dt>${ic('clock', 13)}Placed</dt><dd>${esc(o.when)}</dd></div><div><dt>${ic('hash', 13)}PO</dt><dd>${esc(o.po || '—')}</dd></div><div><dt>${ic('plane', 13)}Tail or station</dt><dd>${esc(o.tail || '—')}</dd></div><div><dt>${ic('route', 13)}Status</dt><dd>${badge(o.status)}</dd></div><div><dt>${ic('coin', 13)}Payment</dt><dd>${STATUSES.indexOf(o.status) >= 3 ? 'Paid' : 'Invoice sent'}</dd></div></dl>
       <div class="adl">${o.lines.map(l => { const p = PARTS.find(x => x.pn === l.pn); return `<div>${p ? `<img src="${photo(p)}" alt="">` : '<span class="ph"></span>'}<span><strong>${esc(l.pn)}</strong><small>${esc(l.name || 'Sourcing request')}${l.c ? ` · ${l.c}` : ''}</small></span><span class="num">${l.qty} × ${l.aed ? fmt(l.aed) : 'To quote'}</span></div>`; }).join('')}</div>
       <p class="adt"><span>Total with VAT</span><strong>${fmt(o.total)}</strong></p>
       <ol class="ads">${STATUSES.map((s, i) => `<li class="${i < at ? 'done' : i === at ? 'now' : ''}"><i>${i < at ? ic('ok', 12) : ''}</i>${s}</li>`).join('')}</ol>
       <button class="a-btn" data-advance="${o.id}" ${o.status === 'Delivered' ? 'disabled' : ''}>${o.status === 'Delivered' ? 'Delivered' : `Move to ${STATUSES[at + 1]}`}</button>
-      ${o.contact ? `<p class="pnote">Contact: ${esc(o.contact)}${o.po ? `<br>PO: ${esc(o.po)}` : ''}${o.tail ? `<br>Tail or station: ${esc(o.tail)}` : ''}</p>` : ''}
+      ${o.contact ? `<p class="pnote">${ic('mail' in ICON ? 'mail' : 'user', 13)} ${esc(o.contact)}</p>` : ''}
     </aside>`;
   }
 
@@ -407,7 +426,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     root.innerHTML = `<div class="admin">
       <aside class="a-side">
         <a class="logo" href="#" data-exit aria-label="Back to the store"><svg width="24" height="19"><use href="#i-logo"/></svg><span>SIRB Admin</span></a>
-        <nav aria-label="Admin">${NAV.map(([k, l]) => `<button class="${view === k ? 'on' : ''}" data-go="${k}" ${view === k ? 'aria-current="page"' : ''}><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>${l}${k === 'aog' ? (n => n ? `<i class="cnt">${n}</i>` : '')(state.orders.filter(o => o.aog && o.status !== 'Delivered').length) : ''}</button>`).join('')}</nav>
+        <nav aria-label="Admin">${NAV.map(([k, l]) => !l ? `<p class="navg">${k}</p>` : `<button class="${view === k ? 'on' : ''}" data-go="${k}" ${view === k ? 'aria-current="page"' : ''}><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>${l}${k === 'aog' ? (n => n ? `<i class="cnt">${n}</i>` : '')(state.orders.filter(o => o.aog && o.status !== 'Delivered').length) : ''}</button>`).join('')}</nav>
         <a class="a-back" href="#" data-exit>Back to the store</a>
       </aside>
       <main class="a-main">${views[view]()}</main>
