@@ -57,7 +57,7 @@ function renderStatic() {
   $('footPay').innerHTML = ['visa', 'mastercard', 'americanexpress', 'applepay'].map(k => logo(k, 28)).join('');
   $('appr').innerHTML = t('appr').map(([a, b, c]) => `<div><strong>${a}</strong><span>${b}</span><code dir="ltr">${c}</code></div>`).join('');
   $('stats').innerHTML = t('stats').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
-  $('quotes').innerHTML = t('quotes').map(([q, r, c]) => `<figure><blockquote>“${q}”</blockquote><figcaption><strong>${r}</strong><span>${c}</span></figcaption></figure>`).join('');
+  $('quotes').innerHTML = t('quotes').map(([q, r, c], i) => `<figure><blockquote>“${q}”</blockquote><figcaption><img src="assets/people/q${i + 1}.webp" alt="" width="44" height="44" loading="lazy" decoding="async"><span class="qwho"><strong>${r}</strong><span>${c}</span></span></figcaption></figure>`).join('');
   $('cgrid').innerHTML = t('contacts').map(([a, b, href, l], i) => `<a class="ccard${i === 0 ? ' hot' : ''}" href="${href}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}><i class="ci">${icon(['i-headset', 'i-wa', 'i-mail', 'i-pin'][i], 22)}</i><span>${a}</span><strong dir="${i < 2 ? 'ltr' : 'auto'}">${b}</strong><em>${l}<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></em></a>`).join('');
   $('footLegal').innerHTML = `<h3>${t('fLegal')}</h3>` + t('legal').map(([k, l]) => `<button type="button" class="flink" data-legal="${k}">${l}</button>`).join('');
   $('faqList').innerHTML = t('faq').map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('');
