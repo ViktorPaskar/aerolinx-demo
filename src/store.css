@@ -273,6 +273,15 @@ button.cell:active{transform:scale(.97)}
 .as-list .c-buy{padding:16px 20px}
 .minis .c-more{display:none}
 
+/* Card meta icons: small, grey, only where they read faster than words */
+.c-head .fits{display:flex;align-items:center;gap:6px}
+.c-head .fits svg{flex:none;width:14px;height:14px;color:var(--t3)}
+.c-head .fits>span:not(.c-cert){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-head .fits .c-cert{flex:none;display:inline-flex;align-items:center;gap:5px;margin-inline-start:4px;padding-inline-start:10px;border-inline-start:1px solid var(--line2);overflow:visible;color:var(--t2)}
+.c-cert svg{width:14px;height:14px;color:var(--t3)}
+.aogr{position:absolute;inset-inline-start:8px;top:8px;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 6px;border-radius:999px;background:rgba(255,255,255,.94);color:#1d1d1f;font:600 11px/1 var(--body);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.aogr svg{width:12px;height:12px;color:#1f6bff}
+
 /* Out of stock: the photo turns grey so the shelf reads at a glance */
 .card.out .c-photo img,.gal-main.out img,.gal-th.out img{filter:grayscale(1) contrast(.88) brightness(1.06);opacity:.62}
 .card.out .c-photo,.gal-main.out{background:linear-gradient(160deg,#ececee,#dcdce0)}
@@ -909,6 +918,7 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   [dir=rtl] .c-head .pn{text-align:right}
   .c-pr{min-width:0;flex:1}
   .c-q{font-size:12.5px}
+  .aogr{inset-inline-start:6px;top:6px;height:20px;padding:0 7px 0 5px;font-size:10.5px}
   .soldout{inset-inline-start:6px;bottom:6px;height:20px;padding:0 7px;font-size:10.5px;gap:5px}
   .soldout::before{width:5px;height:5px}
   .minis{grid-template-columns:minmax(0,1fr)}

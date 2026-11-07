@@ -164,6 +164,8 @@ function cell(p, o, i, best, one) {
     ? `<button type="button" class="cell${best ? ' best' : ''}${ar ? ' ar' : ''}${on ? ' in' : ''}${one ? ' one' : ''}" data-addo="${esc(p.pn)}|${i}" aria-label="${esc(`${t('add')}: ${p.pn}, ${t(o.c)}, ${money(o.aed)}, ${sub}`)}">${inner}</button>`
     : `<span class="cell none${one ? ' one' : ''}" aria-hidden="true">${inner}</span>`;
 }
+// Ready for an AOG: installable, on the shelf at a Dubai airport, ships today.
+const aogReady = o => o && o.qty && o.c !== 'AR' && (o.from === 'DXB' || o.from === 'DWC');
 function card(p) {
   const best = bestFit(p) || p.offers.find(o => o.qty), any = !!best;
   const i = any ? p.offers.indexOf(best) : -1, k = any ? keyOf(p.pn, i) : '', on = any && !!S.cart[k];
@@ -182,11 +184,11 @@ function card(p) {
       </div>`;
   return `<article class="card${any ? '' : ' out'}" data-card="${p.pn}">
     <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn + (any ? '' : ', ' + t('outStock')))}"></a>
-    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async">${any ? '' : `<span class="soldout">${t('outStock')}</span>`}</div>
+    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async">${any ? (aogReady(best) ? `<span class="aogr" title="${esc(t('aogReadyT'))}">${icon('i-bolt', 12)}${t('aogReady')}</span>` : '') : `<span class="soldout">${t('outStock')}</span>`}</div>
     <div class="c-head">
       <span class="pn" dir="ltr">${p.pn}</span>
       <h3>${nameOf(p)}</h3>
-      <p class="fits">${p.fits.map(fleetName).join(', ')}</p>
+      <p class="fits">${icon('i-plane', 14)}<span>${p.fits.map(fleetName).join(', ')}</span>${(() => { const o = bestFit(p) || p.offers.find(x => x.c !== 'AR'); return o ? `<span class="c-cert">${icon('i-tag', 14)}${o.doc.startsWith('EASA') ? 'EASA' : 'FAA'}</span>` : ''; })()}</p>
     </div>
     ${buy}
   </article>`;
