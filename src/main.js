@@ -101,11 +101,10 @@ document.fonts?.addEventListener?.('loadingdone', refit);
 addEventListener('resize', refit);
 
 /* ---------- Categories, filters, grid ---------- */
-const CAT_PIC = { gear: 'brake', engine: 'blade', avionics: 'lru', electrical: 'generator', systems: 'valve', safety: 'oxygen' };
 function renderTiles() {
   $('tiles').innerHTML = CATS.map(c => `<button class="ctile" type="button" data-shop="${c}" aria-pressed="${S.f.cats.length === 1 && S.f.cats[0] === c}">
-    <span class="im"><img src="assets/photos/${CAT_PIC[c]}-1.webp" alt="" loading="lazy"></span>
-    <span class="ct-tx"><strong>${t(c)}</strong><span>${t('catD')[c]}</span></span></button>`).join('');
+    <span class="ci2">${icon('i-c-' + c, 32)}</span>
+    <span class="ct-tx"><strong>${t(c)}</strong><span>${t('catN')(PARTS.filter(p => p.cat === c).length)}</span></span></button>`).join('');
 }
 function optGroup(title, key, items) {
   return `<div class="fgroup"><h3>${title}</h3>${items.map(([v, l]) => `<label class="fopt"><input type="checkbox" data-f="${key}" value="${esc(v)}"${S.f[key].includes(v) ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div>`;
