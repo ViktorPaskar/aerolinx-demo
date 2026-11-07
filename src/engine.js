@@ -208,3 +208,37 @@ export function sampleCam(p) {
     sh: mix(a.sh || 0, b.sh || 0, t), my: mix(a.my || 0, b.my || 0, t),
   };
 }
+
+// Turn every mesh into hairline edges, in place, so the engine reads as a drawing.
+// Each module gets one material, so it can be tinted or dimmed as a whole.
+export function lineArt(engine, { angle = 8 } = {}) {
+  const cache = new Map(), lines = [], mats = {};
+  const edges = geo => { let e = cache.get(geo); if (!e) { e = new THREE.EdgesGeometry(geo, angle).attributes.position.array; cache.set(geo, e); } return e; };
+  const meshes = []; engine.traverse(o => { if (o.isMesh) meshes.push(o); });
+  const m4 = new THREE.Matrix4(), v = new THREE.Vector3();
+  for (const o of meshes) {
+    let mod = o; while (mod.parent && mod.parent !== engine) mod = mod.parent;
+    if (mod.name === 'nacelle') { o.parent.remove(o); continue; }
+    const src = edges(o.geometry);
+    let arr = src;
+    if (o.isInstancedMesh) {
+      arr = new Float32Array(src.length * o.count);
+      for (let i = 0; i < o.count; i++) {
+        o.getMatrixAt(i, m4);
+        for (let j = 0; j < src.length; j += 3) {
+          v.set(src[j], src[j + 1], src[j + 2]).applyMatrix4(m4);
+          const k = i * src.length + j; arr[k] = v.x; arr[k + 1] = v.y; arr[k + 2] = v.z;
+        }
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    const mat = mats[mod.name] ||= new THREE.LineBasicMaterial({ transparent: true, depthWrite: false, toneMapped: false });
+    const l = new THREE.LineSegments(g, mat);
+    l.position.copy(o.position); l.quaternion.copy(o.quaternion); l.scale.copy(o.scale);
+    l.frustumCulled = false; l.userData.mod = mod.name; l.userData.n = arr.length / 3;
+    o.parent.add(l); o.parent.remove(o);
+    lines.push(l);
+  }
+  return { lines, mats };
+}

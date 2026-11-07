@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { makeStudioEnv, makeBrightEnv } from './kit.js';
-import { buildEngine, sampleCam, FOV } from './engine.js';
+import { buildEngine, lineArt } from './engine.js';
 import { createGlobe } from './globe.js';
 import { PARTS, FLEET, CATS, CONDS, HUBS, DOCS, MAKERS, CITIES, photo, stock, bestOffer } from './catalog.js';
 import { T } from './i18n.js';
@@ -78,14 +77,8 @@ function renderTheme() {
 }
 
 function renderChapters() {
-  const ch = t('chapters');
-  $('chapters').innerHTML = ch.map((c, i) => `<div class="chapter" data-i="${i}">
-    <div class="bar">${ch.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</div>
-    <h3>${c.t}</h3><p>${c.d}</p>
-    <ul>${c.i.map(x => `<li>${x}</li>`).join('')}</ul>
-    <button class="solid jump" type="button" data-shop="engine">${t('jump')}</button>
-  </div>`).join('');
-  $('hotspots').innerHTML = ch.map(c => `<div class="hs" data-k="${c.k}"><button type="button" data-chapter="${c.k}">${c.t}</button><i></i></div>`).join('');
+  $('facts').innerHTML = t('facts').map(([a, b]) => `<li><b>${a}</b><span>${b}</span></li>`).join('');
+  $('hotspots').innerHTML = t('chapters').map(c => `<div class="hs" data-k="${c.k}"><button type="button" data-shop="engine" data-mod="${c.k}">${c.t}</button><i></i></div>`).join('');
 }
 
 /* ---------- Aircraft slider ---------- */
@@ -582,7 +575,6 @@ document.addEventListener('click', e => {
   else if ('aog' in d) { openBulk(true); }
   else if ('bulk' in d) openBulk(false);
   else if (d.source) { closePalette(); addToCart(d.source.toUpperCase()); openDrawer(); }
-  else if (d.chapter) jumpToChapter(d.chapter);
   else if (d.track) openTrack(d.track);
   else if (d.legal) { const [, title, paras] = t('legal').find(x => x[0] === d.legal); showModal(`<div class="m-pad legal">${mHead(title)}${paras.map(x => `<p>${x}</p>`).join('')}</div>`); }
   else if (d.opt !== undefined) { S.pd.oi = +d.opt; S.pd.qty = 1; renderPdpKeep(); }
@@ -656,112 +648,107 @@ let globe;
 const story = $('story');
 let storyTop = 0, storyLen = 1, engineTheme = null;
 function sizeStory() { storyTop = story.offsetTop; storyLen = Math.max(story.offsetHeight - innerHeight, 1); }
-const chapterP = { fan: .58, hpc: .68, combustor: .78, lpt: .88 };
-function jumpToChapter(k) { scrollTo({ top: storyTop + chapterP[k] * storyLen, behavior: 'smooth' }); }
-const band = (p, a, b, c, d) => p <= a || p >= d ? 0 : p < b ? (p - a) / (b - a) : p > c ? 1 - (p - c) / (d - c) : 1;
+
+// Two framings of the same line drawing: the fan head-on, then the whole engine pulled apart.
+const SHOTS = {
+  wide: [{ pos: [.5, .05, 3.4], tgt: [-1.1, .05, 0], fov: 36, ex: 0 }, { pos: [4.6, .75, 2.2], tgt: [-.3, -.1, -1.3], fov: 33, ex: .14 }, { pos: [6.4, .5, -.8], tgt: [.2, -.8, -1.45], fov: 31, ex: .3 }],
+  tall: [{ pos: [0, .25, 4.9], tgt: [0, -1.05, 0], fov: 40, ex: 0 }, { pos: [5, .6, 2.6], tgt: [0, -1, -1.3], fov: 38, ex: .14 }, { pos: [8.2, .4, -1.4], tgt: [0, -1.2, -1.9], fov: 34, ex: .3 }],
+};
+const ease = x => x * x * (3 - 2 * x), lerp = (a, b, k) => a + (b - a) * k;
+function shotAt(p, tall, rtl) {
+  const K = SHOTS[tall ? 'tall' : 'wide'], u = ease(clamp(p)) * 2, i = Math.min(Math.floor(u), 1), k = u - i, a = K[i], b = K[i + 1];
+  const m = (x, j) => j === 0 && rtl ? -x : x;
+  return { pos: a.pos.map((v, j) => m(lerp(v, b.pos[j], k), j)), tgt: a.tgt.map((v, j) => m(lerp(v, b.tgt[j], k), j)), fov: lerp(a.fov, b.fov, k), ex: lerp(a.ex, b.ex, k) };
+}
 
 function applyOverlays(p) {
-  const heroO = clamp(1 - p / .05), hero = $('hero');
-  hero.style.opacity = heroO; hero.style.visibility = heroO < .01 ? 'hidden' : 'visible';
-  hero.style.transform = `translateY(${-p * 900}px) scale(${1 - p * .6})`;
-  $('halo').style.transform = `translateY(${p * 700}px)`;
-  const b1 = band(p, .15, .2, .285, .33), b2 = band(p, .405, .45, .51, .54);
-  $('beat1').style.opacity = b1; $('beat1').style.transform = `translateY(${(1 - b1) * 18}px)`;
-  $('beat2').style.opacity = b2; $('beat2').style.transform = `translateY(${(1 - b2) * 18}px)`;
-  const ranges = [[.545, .57, .615, .64], [.645, .67, .715, .74], [.745, .77, .815, .84], [.845, .87, .925, .955]];
-  let mx = b1;
-  document.querySelectorAll('.chapter').forEach((el, i) => {
-    const o = band(p, ...ranges[i]); mx = Math.max(mx, o);
-    el.style.opacity = o; el.style.transform = `translateY(${(1 - o) * 20}px)`;
-    el.style.visibility = o < .01 ? 'hidden' : 'visible';
-    el.style.pointerEvents = o > .9 ? 'auto' : 'none';
-  });
-  $('scrim').style.opacity = mx;
-  $('hotspots').style.opacity = band(p, .445, .47, .515, .54);
-  $('hotspots').style.visibility = p > .44 && p < .545 ? 'visible' : 'hidden';
+  const out = clamp((p - .12) / .26), hero = $('hero');
+  for (const el of [hero, $('facts')]) { el.style.opacity = 1 - out; el.style.transform = `translateY(${-out * 40}px)`; el.style.visibility = out > .99 ? 'hidden' : 'visible'; }
+  const b = clamp((p - .55) / .25), beat = $('beat2');
+  beat.style.opacity = b; beat.style.transform = `translateY(${(1 - b) * 24}px)`; beat.style.pointerEvents = b > .9 ? 'auto' : 'none';
+  const h = clamp((p - .62) / .2);
+  $('hotspots').style.opacity = h; $('hotspots').style.visibility = h > .01 ? 'visible' : 'hidden';
   $('fab').classList.toggle('off', p > .02 && p < .99);
 }
 
 function setupEngine() {
   const canvas = $('gl');
-  const small = innerWidth < 820;
-  const lite = small || (navigator.hardwareConcurrency || 8) <= 4;
+  const lite = innerWidth < 820 || (navigator.hardwareConcurrency || 8) <= 4;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0;
   const scene = new THREE.Scene();
-  const envs = { dark: makeStudioEnv(renderer), light: makeBrightEnv(renderer) };
-  engineTheme = () => { scene.environment = envs[S.theme]; };
-  engineTheme();
+  scene.fog = new THREE.Fog(0x000000, 3, 9);
   const { engine, modules, rotor, sync } = buildEngine({ lite });
+  const { lines, mats } = lineArt(engine, { angle: lite ? 10 : 7 });
   scene.add(engine);
-  const cam = new THREE.PerspectiveCamera(FOV, 1, .05, 80);
+  const lit = {}; // module under a hovered label turns brand blue
+  engineTheme = () => {
+    const light = S.theme === 'light';
+    scene.fog.color.set(light ? 0xffffff : 0x000000);
+    for (const [n, m] of Object.entries(mats)) {
+      const hot = lit[n] || 0, base = new THREE.Color(light ? 0x1d1d1f : 0xdfe3ea);
+      m.color.copy(base).lerp(new THREE.Color(light ? 0x1f6bff : 0x5a96ff), hot);
+      m.userData.base = (n === 'fan' ? (light ? .5 : .55) : (light ? .3 : .34)) + hot * .4; m.opacity = m.userData.base;
+    }
+  };
+  engineTheme();
+  const groups = { fan: ['fan'], hpc: ['lpc', 'hpc'], combustor: ['combustor'], lpt: ['hpt', 'lpt', 'exhaust'] };
+  $('hotspots').addEventListener('pointerover', e => { const k = e.target.closest('[data-mod]')?.dataset.mod; for (const n in mats) lit[n] = 0; (groups[k] || []).forEach(n => { lit[n] = 1; }); engineTheme(); });
+  $('hotspots').addEventListener('pointerout', () => { for (const n in mats) lit[n] = 0; engineTheme(); });
+  const cam = new THREE.PerspectiveCamera(36, 1, .05, 80);
 
-  let W = 0, H = 0, maxDpr = Math.min(devicePixelRatio || 1, lite ? 1.5 : 2);
+  let W = 0, H = 0, maxDpr = Math.min(devicePixelRatio || 1, 2);
   const resize = () => {
     W = canvas.clientWidth; H = canvas.clientHeight;
     if (!W) return;
-    renderer.setPixelRatio(maxDpr);
-    renderer.setSize(W, H, false);
-    cam.aspect = W / H; cam.updateProjectionMatrix();
-    sizeStory();
+    renderer.setPixelRatio(maxDpr); renderer.setSize(W, H, false);
+    cam.aspect = W / H; cam.updateProjectionMatrix(); sizeStory();
   };
   resize(); addEventListener('resize', resize);
 
   let px = 0, py = 0, tx = 0, ty = 0;
   addEventListener('pointermove', e => { tx = e.clientX / innerWidth - .5; ty = e.clientY / innerHeight - .5; }, { passive: true });
-  let pS = clamp((scrollY - storyTop) / storyLen);
-  const start = performance.now();
-  let spin = 0, prev = start, active = true, slow = 0;
-  const v = new THREE.Vector3(), fw = new THREE.Vector3();
-  const zoomFor = (aspect, pv) => {
-    const base = aspect < 1.25 ? Math.min(1.25 / aspect, 2.1) : 1;
-    return pv < .1 ? 1 + (base - 1) * (.72 + pv * 2.8) : base;
-  };
+  let pS = clamp((scrollY - storyTop) / storyLen), prev = performance.now(), active = true, spin = 0;
+  const start = prev, order = ['fan', 'lpc', 'hpc', 'combustor', 'hpt', 'lpt', 'exhaust', 'shaft'];
+  const allLit = {}; for (const n of Object.keys(modules)) allLit[n] = 1;
+  const v = new THREE.Vector3(), d3 = new THREE.Vector3();
+  let drawn = false;
   const frame = now => {
     requestAnimationFrame(frame);
     if (!active || S.pd || !$('adminRoot').hidden) { prev = now; return; }
     const real = (now - prev) / 1000, dt = Math.min(real, .05); prev = now;
-    const target = clamp((scrollY - storyTop) / storyLen);
-    pS += (target - pS) * (1 - Math.exp(-Math.min(real, .6) * 7));
-    const p = pS;
-    px += (tx - px) * (1 - Math.exp(-dt * 3)); py += (ty - py) * (1 - Math.exp(-dt * 3));
-    const s = sampleCam(p), aspect = W / H, zoom = zoomFor(aspect, p), pos = s.pos.slice(), tgt = s.tgt.slice();
-    for (let i = 0; i < 3; i++) pos[i] = tgt[i] + (pos[i] - tgt[i]) * zoom;
-    if (s.sh) {
-      if (aspect < 1) { tgt[1] += s.my * s.sh * .86; pos[1] += s.my * s.sh * .86; }
-      else {
-        fw.set(tgt[0] - pos[0], 0, tgt[2] - pos[2]).normalize();
-        const side = S.lang === 'ar' ? -1 : 1, rx = -fw.z, rz = fw.x, d = s.sh * side;
-        tgt[0] -= rx * d; tgt[2] -= rz * d; pos[0] -= rx * d; pos[2] -= rz * d;
+    pS += (clamp((scrollY - storyTop) / storyLen) - pS) * (1 - Math.exp(-Math.min(real, .6) * 6));
+    const p = pS, aspect = W / H;
+    px += (tx - px) * (1 - Math.exp(-dt * 2.5)); py += (ty - py) * (1 - Math.exp(-dt * 2.5));
+    const s = shotAt(p, aspect < 1, S.lang === 'ar');
+    cam.fov = s.fov; cam.updateProjectionMatrix();
+    cam.position.set(s.pos[0] + px * .25, s.pos[1] - py * .18, s.pos[2]);
+    cam.lookAt(...s.tgt);
+    const dist = d3.set(...s.pos).distanceTo(v.set(...s.tgt));
+    scene.fog.near = dist * .75; scene.fog.far = dist * 2.4;
+    sync(s.ex, 1, allLit);
+    spin += dt * .12; rotor.rotation.z = spin;
+    // Head-on, the core behind the fan stays a faint echo; it comes forward as the engine turns.
+    const core = .22 + .78 * ease(clamp(p / .5));
+    for (const [n, m] of Object.entries(mats)) m.opacity = m.userData.base * (n === 'fan' ? 1 : core);
+    // Draw the lines in on load, fan first, then the core module by module.
+    if (!drawn) {
+      const el = (now - start) / 1000; let done = true;
+      for (const l of lines) {
+        const i = Math.max(order.indexOf(l.userData.mod), 0), k = clamp((el - .15 - i * .12) / 2.2);
+        const n = Math.floor(l.userData.n * (1 - Math.pow(1 - k, 3)) / 2) * 2;
+        l.geometry.setDrawRange(0, n); if (k < 1) done = false;
       }
+      drawn = done || reduced;
     }
-    const par = 1 - clamp(p / .1) * .75;
-    cam.position.set(pos[0] + px * .55 * par, pos[1] - py * .32 * par, pos[2]);
-    cam.lookAt(tgt[0], tgt[1], tgt[2]);
-    sync(s.explode, s.open, s.focus);
-    const el = (now - start) / 1000, k = clamp(el / 4.2);
-    const speed = (Math.sin(Math.min(k * 1.5, 1) * Math.PI / 2) * 2.1) * (1 - k * k * .72) + .08 + p * .25;
-    spin += speed * dt;
-    rotor.rotation.z = spin;
-    for (const n of ['lpc', 'hpc', 'hpt', 'lpt']) modules[n].rotation.z = spin * 1.4;
-    renderer.toneMappingExposure = clamp(el / 2.2) * (S.theme === 'light' ? .92 : 1.08);
-    canvas.style.transition = el > 2 ? 'none' : '';
-    canvas.style.opacity = p > .95 ? clamp((1 - p) / .05) : '';
     renderer.render(scene, cam);
     applyOverlays(p);
-    if (el > 3) {
-      slow = Math.max(slow + (real > .03 ? 1 : -.25), 0);
-      if (slow > 45 && maxDpr > 1) { maxDpr = Math.max(maxDpr - .5, 1); slow = 0; resize(); }
-    }
-    if (p > .44 && p < .55) {
+    if (p > .55) {
       document.querySelectorAll('.hs').forEach(h => {
         const m = modules[h.dataset.k], a = m.userData.anchor;
         v.set(0, a.y, a.z + m.position.z); engine.localToWorld(v); v.project(cam);
-        const x = (v.x * .5 + .5) * W, y = (-v.y * .5 + .5) * H;
-        h.style.setProperty('--len', '18px');
-        h.style.transform = `translate(${x}px,${y - 52}px) translate(-50%,0)`;
+        h.style.setProperty('--len', '22px');
+        h.style.transform = `translate(${(v.x * .5 + .5) * W}px,${(-v.y * .5 + .5) * H - 60}px) translate(-50%,0)`;
       });
     }
   };
@@ -780,7 +767,6 @@ else { try { setupEngine(); } catch (err) { console.error(err); document.documen
 sizeStory();
 globeCities.forEach(c => { c.label = c[S.lang]; });
 globe = createGlobe($('globe'), () => globeCities, reduced, () => S.theme === 'light');
-$('halo').style.opacity = 1;
 requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('pre')));
 const onScroll = () => $('nav').classList.toggle('solidnav', scrollY > 40 && (scrollY > storyTop + storyLen - 10 || document.documentElement.classList.contains('static')));
 addEventListener('scroll', () => { onScroll(); fabClear(); }, { passive: true }); onScroll();

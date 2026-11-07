@@ -97,7 +97,7 @@ h1{font-size:clamp(44px,min(7vw,12.6vh),124px);line-height:1.01;letter-spacing:-
 .pre .nav{opacity:0}
 
 /* Story */
-.story{position:relative;height:540vh;background:var(--bg)}
+.story{position:relative;height:210vh;background:var(--bg)}
 .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--bg)}
 .gl,.poster{position:absolute;inset:0;width:100%;height:100%}
 .gl{opacity:0;transition:opacity 1.6s ease-out}
@@ -762,6 +762,27 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
 
 .fab.dodge{opacity:0;pointer-events:none;transform:translateY(12px)}
 
+/* Hero: the engine as a hairline drawing behind the type */
+.stage::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 70%,transparent) 26%,transparent 55%)}
+.story .hero{position:absolute;z-index:2;inset:auto;inset-block-end:clamp(56px,10vh,104px);inset-inline-start:max(var(--gut),calc((100vw - 1400px)/2 + var(--gut)));display:block;width:min(600px,calc(100vw - var(--gut)*2));padding:0;text-align:start}
+.story .hero .kick{font-size:14px;font-weight:500;color:var(--t2)}
+.story .hero h1{margin-top:14px;max-width:none;font-size:clamp(46px,min(6vw,10vh),88px);line-height:1;letter-spacing:-.04em}
+[dir=rtl] .story .hero h1{letter-spacing:0;line-height:1.2;font-size:clamp(40px,min(5vw,9vh),76px)}
+.story .lede{margin-top:18px;max-width:27em;font-size:clamp(16px,1.3vw,19px)}
+.story .searchpill{margin-top:26px;width:min(520px,100%)}
+.story .hero-links{justify-content:flex-start;margin-top:4px}
+.facts{position:absolute;z-index:2;max-width:calc(100vw - 720px);inset-inline-end:max(var(--gut),calc((100vw - 1400px)/2 + var(--gut)));bottom:clamp(64px,11vh,112px);display:flex;gap:clamp(28px,3.4vw,52px);list-style:none}
+.facts b{display:block;font:600 clamp(20px,1.8vw,26px)/1.1 var(--display);letter-spacing:-.02em;white-space:nowrap}
+.facts span{display:block;margin-top:5px;max-width:12em;font-size:13px;line-height:1.35;color:var(--t2)}
+.story .beat2{z-index:2;inset:auto;inset-block-end:clamp(56px,10vh,104px);inset-inline-start:max(var(--gut),calc((100vw - 1400px)/2 + var(--gut)));width:min(560px,calc(100vw - var(--gut)*2));text-align:start}
+.story .beat2 p{margin:16px 0 0;max-width:26em}
+.story .beat2 .jump{margin-top:24px;height:46px;padding:0 20px;font-size:15px}
+.story .hotspots{z-index:2}
+.story .hs button{font-size:12.5px;height:30px;padding:0 12px}
+.static .story .hero{position:absolute;min-height:0}
+.static .story .beat,.static .story .hotspots{display:none}
+.static .poster{object-position:70% 50%;opacity:.9}
+
 /* Brand accents */
 .logo svg{color:var(--brand)}
 .pd-pn strong,.d1 em{color:var(--brand)}
@@ -890,7 +911,7 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .ghost.icon{width:40px;height:40px}
   .toast{bottom:14px}
   .tools .solid{margin-inline-start:2px;padding:0 10px}
-  .story{height:460vh}
+  .story{height:190vh}
   .hero{padding-top:86px}
   h1.breaks{white-space:normal}
   .searchpill{height:52px}
@@ -941,6 +962,9 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .opt small.r{white-space:normal}
   .bb-p{font-size:28px}
   .cgrid{grid-template-columns:minmax(0,1fr)}
+  .facts{display:none}
+  .story .hero{inset-block-end:40px}
+  .story .beat2{inset-block-end:48px}
   .lgrow{gap:18px 26px}
   #opsLogos .lgrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:start;row-gap:22px}
   .lgrow .lg{height:40px}

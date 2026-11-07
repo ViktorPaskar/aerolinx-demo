@@ -1,13 +1,14 @@
 export const T = {
   en: {
     navParts: 'Shop parts', navAog: 'AOG desk', navGulf: 'Why Dubai', navTrace: 'Certificates', navFaq: 'Help', cart: 'Cart', search: 'Search parts', saved: 'Saved', track: 'Track order', themeL: 'Switch to light theme', themeD: 'Switch to dark theme',
-    h1: 'Aircraft spare parts,\nready to fly tonight.',
-    lede: 'Buy certified engine, landing gear and avionics parts online. Priced in dirhams, in stock at Dubai’s airports.',
+    heroKick: 'Aircraft spare parts · Dubai', h1: 'Precision,\non the shelf.',
+    facts: [['3', 'Dubai airports, one stock list'], ['14 min', 'AOG reply, any hour'], ['EASA · FAA', 'release on every serviceable part']],
+    lede: 'Certified engine, landing gear and avionics parts at Dubai’s airports. Priced in dirhams, released tonight.',
     heroSearch: 'Search by part number or aircraft',
     bulkOpen: 'Paste a parts list',
     s1: 'An airliner has hundreds of thousands of parts.\nAny one can ground it.',
-    s2: 'We stock the ones that do.',
-    s2b: 'Engine, gear, avionics and systems parts, priced and ready to order on this site.',
+    s2: 'Every module,\non the shelf.',
+    s2b: 'Fan, compressor, combustor and turbine parts, each with its release certificate and full history.',
     chapters: [
       { k: 'fan', t: 'Fan and booster', d: 'The first thing a bird meets, and the first thing you’ll need after it does.', i: ['Fan blades', 'Spinner cones', 'Outlet guide vanes'] },
       { k: 'hpc', t: 'Compressor', d: 'Thousands of small blades. One nick can pull the whole stage in for inspection.', i: ['Rotor blades', 'Stator vanes', 'Bleed valves'] },
@@ -104,13 +105,14 @@ export const T = {
   },
   ar: {
     navParts: 'تسوّق القطع', navAog: 'مكتب الطوارئ', navGulf: 'لماذا دبي', navTrace: 'الشهادات', navFaq: 'المساعدة', cart: 'السلة', search: 'ابحث عن قطعة', saved: 'المحفوظات', track: 'تتبّع الطلب', themeL: 'التبديل إلى المظهر الفاتح', themeD: 'التبديل إلى المظهر الداكن',
-    h1: 'قطع غيار الطائرات،\nجاهزة للطيران الليلة.',
-    lede: 'اشترِ عبر الإنترنت قطع المحركات ومعدات الهبوط والإلكترونيات المعتمدة. بالدرهم، ومتوفرة في مطارات دبي.',
+    heroKick: 'قطع غيار الطائرات · دبي', h1: 'دقّة،\nعلى الرف.',
+    facts: [['3', 'مطارات في دبي، ومخزون واحد'], ['14 دقيقة', 'رد على الطلب الطارئ في أي ساعة'], ['EASA · FAA', 'شهادة إفراج مع كل قطعة صالحة']],
+    lede: 'قطع معتمدة للمحركات ومعدات الهبوط والإلكترونيات في مطارات دبي. بالدرهم، وتُشحن الليلة.',
     heroSearch: 'ابحث برقم القطعة أو نوع الطائرة',
     bulkOpen: 'الصق قائمة قطع',
     s1: 'في الطائرة مئات الآلاف من القطع.\nوأي قطعة منها قد توقفها.',
-    s2: 'ونحن نوفّر هذه القطع.',
-    s2b: 'قطع المحرك ومعدات الهبوط والإلكترونيات والأنظمة، بأسعار معلنة وجاهزة للطلب من هذا الموقع.',
+    s2: 'كل وحدة،\nعلى الرف.',
+    s2b: 'قطع المروحة والضاغط وغرفة الاحتراق والتوربين، لكل منها شهادة إفراج وسجل كامل.',
     chapters: [
       { k: 'fan', t: 'المروحة والمعزز', d: 'أول ما يصطدم به الطائر، وأول ما ستحتاجه بعد ذلك.', i: ['شفرات المروحة', 'مخاريط الدوّار', 'ريش التوجيه الخلفية'] },
       { k: 'hpc', t: 'الضاغط', d: 'آلاف الشفرات الصغيرة، وخدش واحد قد يُخضع المرحلة كلها للفحص.', i: ['شفرات الدوّار', 'ريش الثابت', 'صمامات السحب'] },
