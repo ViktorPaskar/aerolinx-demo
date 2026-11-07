@@ -6,6 +6,7 @@ import { PARTS, FLEET, CATS, CONDS, HUBS, DOCS, MAKERS, CITIES, photo, stock, be
 import { T } from './i18n.js';
 import { certEASA, certFAA, certFor } from './cert.js';
 import { createAdmin, sampleOrders, STATUSES } from './admin.js';
+import { logo } from './logos.js';
 import poster from '../assets/poster.webp';
 
 const $ = id => document.getElementById(id);
@@ -52,6 +53,9 @@ function renderStatic() {
   $('sortSel').innerHTML = [['rel', 'sRel'], ['low', 'sLow'], ['high', 'sHigh'], ['stock', 'sStock']].map(([v, k]) => `<option value="${v}"${S.f.sort === v ? ' selected' : ''}>${t(k)}</option>`).join('');
   $('footShop').innerHTML = `<h3>${t('fShop')}</h3>` + CATS.map(c => `<a href="#parts" data-shop="${c}">${t(c)}</a>`).join('');
   $('trust').innerHTML = t('trust').map(([a, b], i) => `<div>${icon(['i-tag', 'i-trace', 'i-headset', 'i-shield'][i], 24)}<strong>${a}</strong><span>${b}</span></div>`).join('');
+  $('opsLogos').innerHTML = `<p>${t('opsT')}</p><div class="lgrow">${['emirates', 'etihadairways', 'qatarairways', 'saudia', 'turkishairlines', 'lufthansa'].map(k => logo(k, 52)).join('')}</div>`;
+  $('members').innerHTML = `<p>${t('memT')}</p><div class="lgrow sm">${logo('iata', 46)}<b class="tm">ASA</b><b class="tm">AFRA</b></div>`;
+  $('footPay').innerHTML = ['visa', 'mastercard', 'americanexpress', 'applepay'].map(k => logo(k, 28)).join('');
   $('appr').innerHTML = t('appr').map(([a, b, c]) => `<div><strong>${a}</strong><span>${b}</span><code dir="ltr">${c}</code></div>`).join('');
   $('stats').innerHTML = t('stats').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
   $('quotes').innerHTML = t('quotes').map(([q, r, c]) => `<figure><blockquote>“${q}”</blockquote><figcaption><strong>${r}</strong><span>${c}</span></figcaption></figure>`).join('');
@@ -289,7 +293,7 @@ function openCert(p, o) {
 function renderAog() {
   $('ticket').innerHTML = `<div class="tk-head"><div><strong>${t('tkTitle')}</strong><span>${t('tkSub')}</span></div><span class="tk-live"><i></i>${t('tkLive')}</span></div>` +
     t('tk').map(([a, b]) => `<div class="tk"><time dir="ltr">${a}</time><span class="dot"></span><span>${b}</span></div>`).join('');
-  $('routes').innerHTML = `<h3>${t('routesT')}</h3><ul>${CITIES.slice(0, 6).map(c => `<li><span>${c[S.lang]}</span><span dir="ltr">${c.t}</span></li>`).join('')}</ul>`;
+  $('routes').innerHTML = `<h3>${t('routesT')}</h3><ul>${CITIES.slice(0, 6).map(c => `<li><span>${c[S.lang]}</span><span dir="ltr">${c.t}</span></li>`).join('')}</ul><div class="cargo"><span>${t('cargoT')}</span><div>${['emirates', 'dhl', 'fedex', 'ups'].map(k => logo(k, 30)).join('')}</div></div>`;
   animateTicket();
 }
 let tkTimer = 0;
@@ -320,7 +324,7 @@ function renderBento() {
   <article class="tile t-air reveal">${icon('i-hangar', 26)}<h3>${t('airT')}</h3><p>${t('airD')}</p>
     <div class="viz air">${t('airN').map(([a, b]) => `<div><strong dir="ltr">${a}</strong><span>${b}</span></div>`).join('')}</div></article>
   <article class="tile t-pay reveal">${icon('i-bank', 26)}<h3>${t('payT')}</h3><p>${t('payD')}</p>
-    <div class="viz chips">${t('pay').map(x => `<span>${x}</span>`).join('')}</div></article>
+    <div class="viz"><div class="chips">${t('pay').map(x => `<span>${x}</span>`).join('')}</div><div class="paymarks">${['visa', 'mastercard', 'americanexpress', 'applepay'].map(k => logo(k, 34)).join('')}</div></div></article>
   <article class="tile t-zone reveal">${icon('i-stamp', 26)}<h3>${t('zoneT')}</h3><p>${t('zoneD')}</p>
     <ul class="viz zone">${t('zone').map(([a, b]) => `<li><span>${a}</span><span>${b}</span></li>`).join('')}</ul></article>`;
 }
