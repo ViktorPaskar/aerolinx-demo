@@ -1216,8 +1216,8 @@ th.num .sortb{flex-direction:row-reverse}
 
 /* Brand accents */
 .logo svg{color:var(--brand)}
-.logo .lw{color:var(--t1);width:121px;height:13px;flex:none}
-.foot .logo .lw{width:140px;height:15px}
+.logo .lw{color:var(--t1);width:150px;height:19px;flex:none}
+.foot .logo .lw{width:174px;height:22px}
 .a-side .logo .mk{color:var(--t1)}
 .a-side .logo span{font-weight:700;letter-spacing:.04em;font-size:14px}
 .a-side .logo em{font-style:normal;font-weight:500;letter-spacing:0;color:var(--t3);margin-left:4px}
@@ -1342,6 +1342,7 @@ th.num .sortb{flex-direction:row-reverse}
   body{font-size:16px}
   .nav-in{height:54px;gap:4px;padding-inline:14px}
   .logo span{font-size:15px}
+  .logo .lw{width:128px;height:16px}
   .ghost{padding:0 6px;font-size:12px}
   #themeBtn,#curSel,#langBtn{display:none}
   .ghost.icon{width:40px;height:40px}

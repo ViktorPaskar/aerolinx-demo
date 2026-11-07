@@ -425,7 +425,7 @@ export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
     hideTip();
     root.innerHTML = `<div class="admin">
       <aside class="a-side">
-        <a class="logo" href="#" data-exit aria-label="Back to the store"><svg class="mk" width="20" height="20" aria-hidden="true"><use href="#i-mark"/></svg><span>AEROLINX <em>Admin</em></span></a>
+        <a class="logo" href="#" data-exit aria-label="Back to the store"><svg class="mk" width="24" height="24" aria-hidden="true"><use href="#i-mark"/></svg><span>AEROLINX <em>Admin</em></span></a>
         <nav aria-label="Admin">${NAV.map(([k, l]) => !l ? `<p class="navg">${k}</p>` : `<button class="${view === k ? 'on' : ''}" data-go="${k}" ${view === k ? 'aria-current="page"' : ''}><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="${ICON[k]}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>${l}${k === 'aog' ? (n => n ? `<i class="cnt">${n}</i>` : '')(state.orders.filter(o => o.aog && o.status !== 'Delivered').length) : ''}</button>`).join('')}</nav>
         <a class="a-back" href="#" data-exit>Back to the store</a>
       </aside>
