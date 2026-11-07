@@ -77,7 +77,7 @@ ready to fly tonight.</h1>
           <span data-t="heroSearch"></span>
           <kbd>⌘K</kbd>
         </button>
-        <button class="textbtn" id="heroBulk" type="button" data-t="bulkOpen"></button>
+        <div class="hero-links"><a class="textbtn" href="#parts" data-t="toCat"></a><button class="textbtn" id="heroBulk" type="button" data-t="bulkOpen"></button></div>
       </div>
       <div class="beat beat1" id="beat1"><h2 class="d2 breaks" data-t="s1"></h2></div>
       <div class="beat beat2" id="beat2"><h2 class="d2" data-t="s2"></h2><p data-t="s2b"></p></div>
@@ -152,10 +152,26 @@ ready to fly tonight.</h1>
     </div>
   </section>
 
+  <section class="sect proof" id="proof">
+    <div class="wrap">
+      <header class="head reveal"><h2 class="d1 breaks" data-t="proofT"></h2><p class="sub" data-t="proofS"></p></header>
+      <div class="appr reveal" id="appr"></div>
+      <div class="stats reveal" id="stats"></div>
+      <div class="quotes reveal" id="quotes"></div>
+    </div>
+  </section>
+
   <section class="sect faqs" id="faq">
     <div class="wrap faq-grid">
       <h2 class="d1 reveal" data-t="faqT"></h2>
       <div class="faq reveal" id="faqList"></div>
+    </div>
+  </section>
+
+  <section class="sect contact" id="contact">
+    <div class="wrap">
+      <header class="head reveal"><h2 class="d1 breaks" data-t="contactT"></h2><p class="sub" data-t="contactS"></p></header>
+      <div class="cgrid reveal" id="cgrid"></div>
     </div>
   </section>
 
@@ -177,11 +193,12 @@ ready to fly tonight.</h1>
       </div>
       <div class="foot-cols">
         <div id="footShop"></div>
-        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#gulf" data-t="navGulf"></a><a href="#trace" data-t="navTrace"></a><a href="#faq" data-t="navFaq"></a><button type="button" class="flink" id="footTrack" data-t="track"></button></div>
+        <div><h3 data-t="fHelp"></h3><a href="#aog" data-t="navAog"></a><a href="#gulf" data-t="navGulf"></a><a href="#trace" data-t="navTrace"></a><a href="#faq" data-t="navFaq"></a><a href="#contact" data-t="contactNav"></a><button type="button" class="flink" id="footTrack" data-t="track"></button></div>
+        <div id="footLegal"></div>
         <div><h3>SIRB</h3><button type="button" class="flink" id="footBulk" data-t="bulkOpen"></button><a href="#admin" data-t="fAdmin"></a></div>
       </div>
     </div>
-    <div class="foot-end"><span>© 2026 SIRB Aero</span></div>
+    <div class="foot-end"><span>© 2026 SIRB Aero</span><span data-t="legalCo"></span></div>
   </div>
 </footer>
 

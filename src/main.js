@@ -52,6 +52,11 @@ function renderStatic() {
   $('sortSel').innerHTML = [['rel', 'sRel'], ['low', 'sLow'], ['high', 'sHigh'], ['stock', 'sStock']].map(([v, k]) => `<option value="${v}"${S.f.sort === v ? ' selected' : ''}>${t(k)}</option>`).join('');
   $('footShop').innerHTML = `<h3>${t('fShop')}</h3>` + CATS.map(c => `<a href="#parts" data-shop="${c}">${t(c)}</a>`).join('');
   $('trust').innerHTML = t('trust').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
+  $('appr').innerHTML = t('appr').map(([a, b, c]) => `<div><strong>${a}</strong><span>${b}</span><code dir="ltr">${c}</code></div>`).join('');
+  $('stats').innerHTML = t('stats').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
+  $('quotes').innerHTML = t('quotes').map(([q, r, c]) => `<figure><blockquote>“${q}”</blockquote><figcaption><strong>${r}</strong><span>${c}</span></figcaption></figure>`).join('');
+  $('cgrid').innerHTML = t('contacts').map(([a, b, href, l], i) => `<a class="ccard${i === 0 ? ' hot' : ''}" href="${href}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}><span>${a}</span><strong dir="${i < 2 ? 'ltr' : 'auto'}">${b}</strong><em>${l}<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></em></a>`).join('');
+  $('footLegal').innerHTML = `<h3>${t('fLegal')}</h3>` + t('legal').map(([k, l]) => `<button type="button" class="flink" data-legal="${k}">${l}</button>`).join('');
   $('faqList').innerHTML = t('faq').map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('');
   [$('heroBulk'), $('footBulk')].forEach(b => { b.hidden = !adminState.settings.bulk; });
   renderTheme(); renderChapters(); renderSegs(); renderTiles(); renderSide(); renderGrid(); renderAog(); renderBento(); renderTrace(); renderCount();
@@ -469,7 +474,8 @@ function fabClear() {
 
 /* ---------- Routes ---------- */
 let scrollBeforeAdmin = 0;
-const admin = createAdmin({ root: $('adminRoot'), state: adminState, save: saveAdmin, onExit: () => leaveOverlay(), onChange: () => renderStatic() });
+const admin = createAdmin({ root: $('adminRoot'), state: adminState, save: saveAdmin, onExit: () => leaveOverlay(), onChange: () => renderStatic(),
+  onReset: () => { try { ['orders', 'edits', 'settings', 'cart', 'saved', 'recent', 'demoSeen'].forEach(k => localStorage.removeItem('sirb.' + k)); } catch (e) { /* no storage */ } location.hash = 'admin'; location.reload(); } });
 function leaveOverlay() {
   try { history.pushState(null, '', location.pathname + location.search); route(); } catch (e) { location.hash = 'store'; }
 }
@@ -536,6 +542,7 @@ document.addEventListener('click', e => {
   else if (d.source) { closePalette(); addToCart(d.source.toUpperCase()); openDrawer(); }
   else if (d.chapter) jumpToChapter(d.chapter);
   else if (d.track) openTrack(d.track);
+  else if (d.legal) { const [, title, paras] = t('legal').find(x => x[0] === d.legal); showModal(`<div class="m-pad legal">${mHead(title)}${paras.map(x => `<p>${x}</p>`).join('')}</div>`); }
   else if (d.opt !== undefined) { S.pd.oi = +d.opt; S.pd.qty = 1; renderPdpKeep(); }
   else if (d.type) { S.pd.type = d.type; renderPdpKeep(); }
   else if (d.pq) { S.pd.qty = Math.max(1, S.pd.qty + +d.pq); renderPdpKeep(); }

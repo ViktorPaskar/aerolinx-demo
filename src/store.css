@@ -2,7 +2,7 @@
   --bg:#000; --s1:#0a0a0c; --s2:#131316; --s3:#1c1c20; --s4:#26262b;
   --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.17);
   --t1:#f5f5f7; --t2:#a6a6ad; --t3:#7c7c84;
-  --btn:#f5f5f7; --btnh:#fff; --btnt:#000;
+  --btn:#f0a26a; --btnh:#f7b685; --btnt:#1a0c03; --brand:#f0a26a; --brand2:rgba(240,162,106,.14);
   --hover:rgba(255,255,255,.08); --hover2:rgba(255,255,255,.14);
   --nav:rgba(0,0,0,.68); --glass:rgba(22,22,26,.64); --pop:rgba(28,28,32,.88);
   --shadow:0 40px 80px rgba(0,0,0,.6);
@@ -16,7 +16,7 @@
   --bg:#fff; --s1:#f5f5f7; --s2:#f2f2f5; --s3:#e8e8ec; --s4:#dcdce2;
   --line:rgba(0,0,0,.09); --line2:rgba(0,0,0,.18);
   --t1:#1d1d1f; --t2:#5f5f66; --t3:#7a7a82;
-  --btn:#1d1d1f; --btnh:#000; --btnt:#fff;
+  --btn:#a4511b; --btnh:#8c4313; --btnt:#fff; --brand:#a4511b; --brand2:rgba(164,81,27,.09);
   --hover:rgba(0,0,0,.05); --hover2:rgba(0,0,0,.09);
   --nav:rgba(255,255,255,.76); --glass:rgba(255,255,255,.72); --pop:rgba(255,255,255,.92);
   --shadow:0 30px 70px rgba(0,0,0,.14);
@@ -97,7 +97,7 @@ h1{font-size:clamp(44px,min(7vw,12.6vh),124px);line-height:1.01;letter-spacing:-
 .pre .nav{opacity:0}
 
 /* Story */
-.story{position:relative;height:800vh;background:var(--bg)}
+.story{position:relative;height:540vh;background:var(--bg)}
 .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--bg)}
 .gl,.poster{position:absolute;inset:0;width:100%;height:100%}
 .gl{opacity:0;transition:opacity 1.6s ease-out}
@@ -706,6 +706,49 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
 .pre .demo{opacity:0}
 .fab.dodge{opacity:0;pointer-events:none;transform:translateY(12px)}
 
+/* Brand accents */
+.logo svg{color:var(--brand)}
+.pd-pn strong,.d1 em{color:var(--brand)}
+.hero-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px}
+.hero-links .textbtn:first-child{color:var(--t1)}
+
+/* Proof */
+.proof{background:var(--s1)}
+.appr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.appr div{display:flex;flex-direction:column;gap:6px;padding:24px;border-radius:20px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.appr strong{font:600 28px/1 var(--display);letter-spacing:-.02em;color:var(--brand)}
+.appr span{font-size:14.5px;line-height:1.4;color:var(--t1)}
+.appr code{margin-top:auto;padding-top:14px;font:400 12.5px/1 "Courier Prime",monospace;color:var(--t3)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-block:clamp(40px,5vw,72px);border-block:1px solid var(--line)}
+.stats div{padding:clamp(24px,3vw,40px) 24px;border-inline-start:1px solid var(--line)}
+.stats div:first-child{border-inline-start:0;padding-inline-start:0}
+.stats strong{display:block;font:500 clamp(40px,4.6vw,68px)/1 var(--display);letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.stats span{display:block;margin-top:10px;font-size:15px;color:var(--t2)}
+.quotes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.quotes figure{display:flex;flex-direction:column;justify-content:space-between;gap:28px;padding:28px;border-radius:20px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+.quotes blockquote{font:400 19px/1.45 var(--display);letter-spacing:-.01em;text-wrap:pretty}
+[dir=rtl] .quotes blockquote{letter-spacing:0;line-height:1.75;font-size:18px}
+.quotes figcaption{display:flex;flex-direction:column;gap:2px;padding-top:18px;border-top:1px solid var(--line);font-size:14px}
+.quotes figcaption span{color:var(--t2)}
+
+/* Contact */
+.contact{background:var(--bg)}
+.cgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ccard{display:flex;flex-direction:column;gap:10px;min-height:200px;padding:24px;border-radius:20px;background:var(--s2);transition:background .25s,transform .3s var(--ease)}
+.ccard:hover{background:var(--s3);transform:translateY(-2px)}
+.ccard span{font-size:14px;color:var(--t2)}
+.ccard strong{font:500 21px/1.25 var(--display);letter-spacing:-.015em;overflow-wrap:anywhere}
+.ccard em{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font-style:normal;font-size:14px;font-weight:500;color:var(--brand)}
+[dir=rtl] .ccard em svg{transform:scaleX(-1)}
+.ccard.hot{background:var(--btn);color:var(--btnt)}
+.ccard.hot span{color:inherit;opacity:.72}
+.ccard.hot em{color:inherit}
+.ccard.hot:hover{background:var(--btnh)}
+.legal p{margin-top:12px;font-size:15px;line-height:1.55;color:var(--t2)}
+.foot-end{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px}
+.a-btn.ghosty{background:none;color:inherit;box-shadow:inset 0 0 0 1px var(--line2)}
+.a-h .a-btn.ghosty{margin-inline-start:auto}
+
 @media (max-width:1240px){
   .tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -730,6 +773,8 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .beat1{top:clamp(80px,12vh,120px);translate:none;width:auto;inset-inline-end:var(--gut)}
   .scrim{background:linear-gradient(0deg,var(--scrim1),var(--scrim2) 28%,transparent 54%)!important}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .appr,.cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quotes{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:760px){
   .admin{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
@@ -758,7 +803,7 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .demo{bottom:14px;inset-inline-start:14px;max-width:calc(100vw - 90px);font-size:12px}
   .toast{bottom:14px}
   .tools .solid{margin-inline-start:2px;padding:0 10px}
-  .story{height:680vh}
+  .story{height:460vh}
   .hero{padding-top:86px}
   h1.breaks{white-space:normal}
   .searchpill{height:52px}
@@ -794,6 +839,15 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .endcap{min-height:760px}
   .opt small.r{white-space:normal}
   .bb-p{font-size:28px}
+  .cgrid{grid-template-columns:minmax(0,1fr)}
+  .appr{gap:8px}
+  .appr div{padding:16px;border-radius:16px}
+  .appr strong{font-size:22px}
+  .appr span{font-size:13px}
+  .ccard{min-height:0}
+  .stats{grid-template-columns:minmax(0,1fr)}
+  .stats div{border-inline-start:0;border-top:1px solid var(--line);padding-inline:0}
+  .stats div:first-child{border-top:0}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important}

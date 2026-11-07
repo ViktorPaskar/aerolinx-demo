@@ -33,7 +33,7 @@ const ICON = {
   settings: 'M3 6h8M15 6h2M3 14h2M9 14h8M13 4v4M7 12v4',
 };
 
-export function createAdmin({ root, state, save, onExit, onChange }) {
+export function createAdmin({ root, state, save, onExit, onChange, onReset }) {
   let view = 'dash', q = '', edit = null, orderOpen = null;
 
   const badge = s => `<span class="st st-${s.toLowerCase().replace(/\s+/g, '-')}">${s}</span>`;
@@ -48,7 +48,7 @@ export function createAdmin({ root, state, save, onExit, onChange }) {
       const h = v / max * 100;
       return `<div class="bar" data-tip="${m}: AED ${v.toFixed(1)}M" tabindex="0"><span style="height:${h}%" class="${i === REV.length - 1 ? 'now' : ''}"></span><em>${m}</em></div>`;
     }).join('');
-    return `<header class="a-h"><h1>Dashboard</h1></header>
+    return `<header class="a-h"><h1>Dashboard</h1><button class="a-btn ghosty" data-reset title="Restore the sample orders, stock and settings">Reset demo data</button></header>
       <div class="kpis">
         <button class="kpi" data-go="orders"><span>Revenue this month</span><strong>AED ${rev.toFixed(1)}M</strong><em class="up">Up ${Math.round((rev / prev - 1) * 100)}% on October</em></button>
         <button class="kpi" data-go="orders"><span>Open orders</span><strong>${open().length}</strong><em>${state.orders.length} in the last 7 days</em></button>
@@ -157,11 +157,12 @@ export function createAdmin({ root, state, save, onExit, onChange }) {
   };
 
   root.addEventListener('click', e => {
-    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload]');
+    const t = e.target.closest('[data-go],[data-order],[data-closeorder],[data-advance],[data-exit],[data-new],[data-upload],[data-reset]');
     if (!t) return;
     if (t.tagName === 'SELECT' || e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
     const d = t.dataset;
     if ('exit' in d) { e.preventDefault(); onExit(); }
+    else if ('reset' in d) onReset?.();
     else if (d.go) { view = d.go; q = ''; orderOpen = null; render(); root.querySelector('.a-main').scrollTop = 0; }
     else if (d.advance) advance(d.advance);
     else if (d.order) { orderOpen = d.order; render(); }
