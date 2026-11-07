@@ -99,7 +99,7 @@ export const T = {
       ['export', 'Export control', ['Some parts are controlled under US, EU or UAE export rules. The export class is shown on each product page.', 'We screen every buyer, end user and destination before shipment, and may ask for an end-use statement.', 'We do not ship to sanctioned destinations, parties or end uses.']],
     ],
     onReq: 'On request', best: 'Best', noCert: 'No cert', notShelf: 'Not on the shelf', quoteIn: 'Price and lead time within 2 hours', getQuote: 'Get quote', copy: 'Copy part number', undo: 'Undo', warrNone: 'None, sold as removed',
-    added: 'Added to cart', viewCart: 'View cart', menu: 'Menu', theme: 'Theme', lang: 'Language', cur: 'Currency', demo: 'Demo store. Prices, stock, part numbers and certificates are illustrative, not real offers.', demoOk: 'Got it',
+    added: 'Added to cart', viewCart: 'View cart', menu: 'Menu', theme: 'Theme', lang: 'Language', cur: 'Currency',
     trust: [['Certified', 'EASA Form 1 or FAA 8130-3 with every serviceable part'], ['Traceable', 'Full history back to the last operator'], ['Open all night', 'AOG desk in Dubai, every day of the year'], ['Warranted', 'Up to 12 months on rotable parts']],
   },
   ar: {
@@ -202,7 +202,7 @@ export const T = {
       ['export', 'ضوابط التصدير', ['تخضع بعض القطع لقواعد التصدير الأمريكية أو الأوروبية أو الإماراتية، ويظهر تصنيف التصدير في صفحة كل منتج.', 'نفحص كل مشترٍ ومستخدم نهائي ووجهة قبل الشحن، وقد نطلب إقرار الاستخدام النهائي.', 'لا نشحن إلى وجهات أو جهات أو استخدامات خاضعة للعقوبات.']],
     ],
     onReq: 'عند الطلب', best: 'الأفضل', noCert: 'بلا شهادة', notShelf: 'غير متوفرة على الرف', quoteIn: 'السعر ومدة التوريد خلال ساعتين', getQuote: 'اطلب عرض سعر', copy: 'نسخ رقم القطعة', undo: 'تراجع', warrNone: 'لا يوجد، تُباع كما فُكّت',
-    added: 'أُضيفت إلى السلة', viewCart: 'عرض السلة', menu: 'القائمة', theme: 'المظهر', lang: 'اللغة', cur: 'العملة', demo: 'متجر تجريبي. الأسعار والمخزون وأرقام القطع والشهادات توضيحية وليست عروضًا حقيقية.', demoOk: 'حسنًا',
+    added: 'أُضيفت إلى السلة', viewCart: 'عرض السلة', menu: 'القائمة', theme: 'المظهر', lang: 'اللغة', cur: 'العملة',
     trust: [['معتمدة', 'نموذج EASA Form 1 أو FAA 8130-3 مع كل قطعة صالحة للخدمة'], ['قابلة للتتبّع', 'سجل كامل حتى آخر مشغّل'], ['مفتوح طوال الليل', 'مكتب طوارئ في دبي كل أيام السنة'], ['مضمونة', 'حتى 12 شهرًا للقطع الدوّارة']],
   },
 };

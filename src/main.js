@@ -451,7 +451,7 @@ function toggleSave(pn) {
   document.querySelectorAll(`[data-save="${CSS.escape(pn)}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? t('saveR') : t('saveA')) + ' ' + pn); });
 }
 
-/* ---------- Toast, menu, demo notice ---------- */
+/* ---------- Toast and menu ---------- */
 let toastT = 0;
 function toastAdded(p, o) {
   const el = $('toast');
@@ -476,7 +476,6 @@ $('menu').addEventListener('click', e => {
   else if (e.target.closest('[data-mtrack]')) { $('menu').close(); openTrack(); }
 });
 $('menu').addEventListener('change', e => { if (e.target.id === 'menuCur') { S.cur = e.target.value; store('cur', S.cur); renderStatic(); renderMenu(); } });
-if (load('demoSeen', 0)) $('demo').hidden = true;
 // Keep the AOG button off the toolbar and the "show more" button it would cover.
 function fabClear() {
   const fab = $('fab'), y = innerHeight - 84;
@@ -487,7 +486,7 @@ function fabClear() {
 /* ---------- Routes ---------- */
 let scrollBeforeAdmin = 0;
 const admin = createAdmin({ root: $('adminRoot'), state: adminState, save: saveAdmin, onExit: () => leaveOverlay(), onChange: () => renderStatic(),
-  onReset: () => { try { ['orders', 'edits', 'settings', 'cart', 'saved', 'recent', 'demoSeen'].forEach(k => localStorage.removeItem('sirb.' + k)); } catch (e) { /* no storage */ } location.hash = 'admin'; location.reload(); } });
+  onReset: () => { try { ['orders', 'edits', 'settings', 'cart', 'saved', 'recent'].forEach(k => localStorage.removeItem('sirb.' + k)); } catch (e) { /* no storage */ } location.hash = 'admin'; location.reload(); } });
 function leaveOverlay() {
   try { history.pushState(null, '', location.pathname + location.search); route(); } catch (e) { location.hash = 'store'; }
 }
@@ -558,7 +557,7 @@ document.addEventListener('click', e => {
   else if (d.less) { if (--S.cart[d.less].qty < 1) { delete S.cart[d.less]; refreshCards(d.less.split('|')[0]); } saveCart(); renderDrawer(); }
   else if ('opencart' in d) { hideToast(); closeOverlaysKeepPd(); openDrawer(); }
   else if (b.id === 'menuBtn') openMenu();
-  else if (b.id === 'demoOk') { $('demo').hidden = true; store('demoSeen', 1); }
+
   else if ('closedrawer' in d) { S.sent = null; $('drawer').close(); leaveOverlayIfPd(); $('parts').scrollIntoView(); }
   else if ('aog' in d) { openBulk(true); }
   else if ('bulk' in d) openBulk(false);
