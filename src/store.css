@@ -1444,3 +1444,13 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-ba
   .as-list .c-more{margin:4px 0 0}
   .as-list .c-q{white-space:normal;max-width:210px}
 }
+
+/* Operators: a slow, endless logo ribbon. Two identical rows, the track moves by one row. */
+.marq{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marq-t{display:flex;width:max-content;animation:marq 48s linear infinite}
+.marq:hover .marq-t{animation-play-state:paused}
+#opsLogos .marq .lgrow{display:flex;flex-wrap:nowrap;gap:0;padding-inline-end:clamp(48px,5vw,80px);column-gap:clamp(48px,5vw,80px)}
+#opsLogos .marq .lg{height:48px}
+@keyframes marq{to{transform:translateX(-50%)}}
+@media (max-width:640px){#opsLogos .marq .lg{height:36px}#opsLogos .marq .lgrow{column-gap:36px;padding-inline-end:36px}.marq-t{animation-duration:36s}}
+@media (prefers-reduced-motion:reduce){.marq-t{animation:none}.marq{overflow-x:auto}}

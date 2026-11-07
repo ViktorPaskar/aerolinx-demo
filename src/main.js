@@ -52,7 +52,8 @@ function renderStatic() {
   $('sortSel').innerHTML = [['rel', 'sRel'], ['low', 'sLow'], ['high', 'sHigh'], ['stock', 'sStock']].map(([v, k]) => `<option value="${v}"${S.f.sort === v ? ' selected' : ''}>${t(k)}</option>`).join('');
   $('footShop').innerHTML = `<h3>${t('fShop')}</h3>` + CATS.map(c => `<a href="#parts" data-shop="${c}">${t(c)}</a>`).join('');
   $('trust').innerHTML = t('trust').map(([a, b], i) => `<div>${icon(['i-tag', 'i-trace', 'i-headset', 'i-shield'][i], 24)}<strong>${a}</strong><span>${b}</span></div>`).join('');
-  $('opsLogos').innerHTML = `<p>${t('opsT')}</p><div class="lgrow">${['emirates', 'etihadairways', 'qatarairways', 'saudia', 'turkishairlines', 'lufthansa'].map(k => logo(k, 52)).join('')}</div>`;
+  { const ops = ['emirates', 'etihadairways', 'qatarairways', 'saudia', 'turkishairlines', 'airindia', 'lufthansa', 'indigo', 'ethiopianairlines', 'singaporeairlines', 'klm', 'airfrance'].map(k => logo(k, 52)).join('');
+    $('opsLogos').innerHTML = `<p>${t('opsT')}</p><div class="marq" dir="ltr"><div class="marq-t"><div class="lgrow">${ops}</div><div class="lgrow" aria-hidden="true">${ops}</div></div></div>`; }
   $('members').innerHTML = `<p>${t('memT')}</p><div class="lgrow sm">${logo('iata', 46)}<b class="tm">ASA</b><b class="tm">AFRA</b></div>`;
   $('footPay').innerHTML = ['visa', 'mastercard', 'americanexpress', 'applepay'].map(k => logo(k, 28)).join('');
   $('appr').innerHTML = t('appr').map(([a, b, c]) => `<div><strong>${a}</strong><span>${b}</span><code dir="ltr">${c}</code></div>`).join('');
