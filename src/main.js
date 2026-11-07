@@ -167,7 +167,7 @@ function card(p) {
         <div class="c-pr">
           <span class="c-price">${money(best.aed)}${more ? `<small class="c-more">${t('moreConds')(more)}</small>` : ''}</span>
         </div>
-        <button type="button" class="c-add${on ? ' in' : ''}" data-addo="${esc(p.pn)}|${i}" aria-label="${esc(`${on ? t('inq') : t('add')}: ${p.pn}, ${t(best.c)}, ${money(best.aed)}`)}">${icon(on ? 'i-check' : 'i-plus', 20)}</button>
+        <button type="button" class="c-add${on ? ' in' : ''}" data-addo="${esc(p.pn)}|${i}" aria-pressed="${on}" aria-label="${esc(`${on ? t('rmCart') : t('add')}: ${p.pn}, ${t(best.c)}, ${money(best.aed)}`)}">${icon(on ? 'i-check' : 'i-plus', 20)}</button>
       </div>`
     : `<div class="c-buy">
         <div class="c-pr"><span class="c-q">${t('quoteIn')}</span></div>
@@ -539,7 +539,8 @@ document.addEventListener('click', e => {
   }
   else if (d.addo) {
     const [pn, i] = d.addo.split('|'), p = byPn(pn), k = keyOf(pn, +i);
-    if (S.cart[k]) openDrawer(); else { addToCart(pn, +i); refreshCards(pn); toastAdded(p, p.offers[+i]); }
+    if (S.cart[k] && b.classList.contains('c-add')) { delete S.cart[k]; saveCart(); refreshCards(pn); if (lastAdd && lastAdd.key === k) { lastAdd = null; hideToast(); } }
+    else if (S.cart[k]) openDrawer(); else { addToCart(pn, +i); refreshCards(pn); toastAdded(p, p.offers[+i]); }
   }
   else if (d.copy) {
     navigator.clipboard?.writeText(d.copy).catch(() => {});
