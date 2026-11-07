@@ -51,11 +51,11 @@ function renderStatic() {
   $('curSel').value = S.cur; $('curSel').hidden = !adminState.settings.usd;
   $('sortSel').innerHTML = [['rel', 'sRel'], ['low', 'sLow'], ['high', 'sHigh'], ['stock', 'sStock']].map(([v, k]) => `<option value="${v}"${S.f.sort === v ? ' selected' : ''}>${t(k)}</option>`).join('');
   $('footShop').innerHTML = `<h3>${t('fShop')}</h3>` + CATS.map(c => `<a href="#parts" data-shop="${c}">${t(c)}</a>`).join('');
-  $('trust').innerHTML = t('trust').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
+  $('trust').innerHTML = t('trust').map(([a, b], i) => `<div>${icon(['i-tag', 'i-trace', 'i-headset', 'i-shield'][i], 24)}<strong>${a}</strong><span>${b}</span></div>`).join('');
   $('appr').innerHTML = t('appr').map(([a, b, c]) => `<div><strong>${a}</strong><span>${b}</span><code dir="ltr">${c}</code></div>`).join('');
   $('stats').innerHTML = t('stats').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('');
   $('quotes').innerHTML = t('quotes').map(([q, r, c]) => `<figure><blockquote>“${q}”</blockquote><figcaption><strong>${r}</strong><span>${c}</span></figcaption></figure>`).join('');
-  $('cgrid').innerHTML = t('contacts').map(([a, b, href, l], i) => `<a class="ccard${i === 0 ? ' hot' : ''}" href="${href}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}><span>${a}</span><strong dir="${i < 2 ? 'ltr' : 'auto'}">${b}</strong><em>${l}<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></em></a>`).join('');
+  $('cgrid').innerHTML = t('contacts').map(([a, b, href, l], i) => `<a class="ccard${i === 0 ? ' hot' : ''}" href="${href}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}><i class="ci">${icon(['i-headset', 'i-wa', 'i-mail', 'i-pin'][i], 22)}</i><span>${a}</span><strong dir="${i < 2 ? 'ltr' : 'auto'}">${b}</strong><em>${l}<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></em></a>`).join('');
   $('footLegal').innerHTML = `<h3>${t('fLegal')}</h3>` + t('legal').map(([k, l]) => `<button type="button" class="flink" data-legal="${k}">${l}</button>`).join('');
   $('faqList').innerHTML = t('faq').map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('');
   [$('heroBulk'), $('footBulk')].forEach(b => { b.hidden = !adminState.settings.bulk; });
@@ -236,7 +236,7 @@ function renderPdp() {
   const tabs = { spec: () => `<dl class="spec">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd><bdi>${b}</bdi></dd></div>`).join('')}</dl>`,
     fits: () => `<div class="fitg">${p.fits.map(f => `<span><bdi>${fleetName(f)}</bdi></span>`).join('')}</div><p class="tnote">${t('fitsNote')}</p>`,
     docs: () => `<div class="docg"><button class="certwrap" type="button" data-certopen="${p.pn}|${d.oi}" aria-label="${t('docOpen')}">${certFor(p, o)}</button><div class="docside"><p>${o.c === 'AR' ? t('docIntroAR') : t('docIntro')(o.doc)}</p><button class="outline" type="button" data-certopen="${p.pn}|${d.oi}">${t('docOpen')}</button></div></div>`,
-    ship: () => `<div class="shiprows">${t('shipRows').map(([a, b]) => `<div><strong>${a}</strong><span>${b}</span></div>`).join('')}</div>` };
+    ship: () => `<div class="shiprows">${t('shipRows').map(([a, b], i) => `<div>${icon(['i-depart', 'i-box', 'i-hangar', 'i-return', 'i-swap'][i], 20)}<strong>${a}</strong><span>${b}</span></div>`).join('')}</div>` };
   const similar = PARTS.filter(x => x.cat === p.cat && x.pn !== p.pn && x.model !== p.model).slice(0, 4);
   const recent = S.recent.filter(x => x !== p.pn).map(byPn).filter(Boolean).slice(0, 4);
   $('pdp').innerHTML = `<div class="pd-top"><div class="wrap">
@@ -266,7 +266,8 @@ function renderPdp() {
               <button class="solid" type="button" id="pdAdd">${avail ? t('add') : t('request')}</button>
               <button class="outline${saved ? ' on' : ''}" type="button" data-save="${p.pn}" aria-pressed="${saved}" aria-label="${saved ? t('saveR') : t('saveA')}">${icon('i-heart', 19)}</button>
             </div>
-            <p class="bb-ship${avail ? '' : ' out'}"><i></i><span>${avail ? t('pShip')(o.from) : t('pShipOut')}</span></p>
+            <p class="bb-ship${avail ? '' : ' out'}">${icon(avail ? 'i-truck' : 'i-headset', 18)}<span>${avail ? t('pShip')(o.from) : t('pShipOut')}</span></p>
+            <ul class="bb-proof"><li>${icon(o.c === 'AR' ? 'i-tag' : 'i-tag', 18)}<span>${o.c === 'AR' ? t('pfTag') : t('pfCert')(o.doc)}</span></li><li>${icon('i-shield', 18)}<span>${o.c === 'AR' ? t('warrNone') : t('pfWarr')(o.c === 'SV' ? 6 : p.warranty)}</span></li><li>${icon('i-return', 18)}<span>${t('pfRet')}</span></li></ul>
           </div>
         </div>
       </div>
@@ -303,24 +304,24 @@ function animateTicket() {
 function renderBento() {
   const p = PARTS[0], sub = p.offers[0].aed, vat = sub * vatRate();
   $('bento').innerHTML = `
-  <article class="tile t-inv reveal"><h3>${t('invT')}</h3><p>${t('invD')}</p>
+  <article class="tile t-inv reveal">${icon('i-invoice', 26)}<h3>${t('invT')}</h3><p>${t('invD')}</p>
     <div class="viz"><div class="inv">
       <div class="inv-h"><span>${t('invNo')}</span><span dir="ltr">${p.pn}</span></div>
       <div class="inv-r"><span>${t('invSub')}</span><span dir="ltr">${money(sub)}</span></div>
       <div class="inv-r"><span>${t('invVat')}</span><span dir="ltr">${money(vat)}</span></div>
       <div class="inv-r tot"><span>${t('invTotal')}</span><span dir="ltr">${money(sub + vat)}</span></div>
     </div></div></article>
-  <article class="tile t-lang reveal"><h3>${t('langT')}</h3><p>${t('langD')}</p>
+  <article class="tile t-lang reveal">${icon('i-lang', 26)}<h3>${t('langT')}</h3><p>${t('langD')}</p>
     <div class="viz bi" dir="ltr">
       <div><span>Tax invoice</span><span>فاتورة ضريبية</span></div>
       <div><span>Packing list</span><span>قائمة التعبئة</span></div>
       <div><span>Quotation</span><span>عرض سعر</span></div>
     </div></article>
-  <article class="tile t-air reveal"><h3>${t('airT')}</h3><p>${t('airD')}</p>
+  <article class="tile t-air reveal">${icon('i-hangar', 26)}<h3>${t('airT')}</h3><p>${t('airD')}</p>
     <div class="viz air">${t('airN').map(([a, b]) => `<div><strong dir="ltr">${a}</strong><span>${b}</span></div>`).join('')}</div></article>
-  <article class="tile t-pay reveal"><h3>${t('payT')}</h3><p>${t('payD')}</p>
+  <article class="tile t-pay reveal">${icon('i-bank', 26)}<h3>${t('payT')}</h3><p>${t('payD')}</p>
     <div class="viz chips">${t('pay').map(x => `<span>${x}</span>`).join('')}</div></article>
-  <article class="tile t-zone reveal"><h3>${t('zoneT')}</h3><p>${t('zoneD')}</p>
+  <article class="tile t-zone reveal">${icon('i-stamp', 26)}<h3>${t('zoneT')}</h3><p>${t('zoneD')}</p>
     <ul class="viz zone">${t('zone').map(([a, b]) => `<li><span>${a}</span><span>${b}</span></li>`).join('')}</ul></article>`;
 }
 let certKind = 'easa';
@@ -474,7 +475,7 @@ function toastAdded(p, o) {
 }
 function hideToast() { const el = $('toast'); el.classList.remove('on'); clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 300); }
 function renderMenu() {
-  $('menuBody').innerHTML = `<nav class="m-links" aria-label="${t('menu')}">${['navParts', 'navAog', 'navGulf', 'navTrace', 'navFaq'].map((k, i) => `<a href="#${['parts', 'aog', 'gulf', 'trace', 'faq'][i]}" data-mclose-menu>${t(k)}</a>`).join('')}<button type="button" class="m-link" data-mtrack>${t('track')}</button></nav>
+  $('menuBody').innerHTML = `<nav class="m-links" aria-label="${t('menu')}">${['navParts', 'navAog', 'navGulf', 'navTrace', 'navFaq'].map((k, i) => `<a href="#${['parts', 'aog', 'gulf', 'trace', 'faq'][i]}" data-mclose-menu>${icon(['i-parts', 'i-headset', 'i-pin', 'i-tag', 'i-help'][i], 22)}${t(k)}</a>`).join('')}<button type="button" class="m-link" data-mtrack>${icon('i-truck', 22)}${t('track')}</button></nav>
     <div class="m-set">
       <div><span>${t('lang')}</span><button class="outline" type="button" data-mlang>${t('langBtn')}</button></div>
       <div><span>${t('cur')}</span><select class="outline" id="menuCur" aria-label="${t('cur')}">${Object.keys(RATES).map(c => `<option${c === S.cur ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
