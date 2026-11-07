@@ -147,24 +147,33 @@ function visible() {
 const matches = (p, q) => p.pn.toLowerCase().includes(q) || p.alts.some(a => a.toLowerCase().includes(q)) || p.en.toLowerCase().includes(q) || p.ar.includes(q) || p.fits.some(x => x.toLowerCase().includes(q)) || t(p.cat).toLowerCase().includes(q) || p.maker.toLowerCase().includes(q);
 
 function inCart(pn) { return Object.keys(S.cart).some(k => k.startsWith(pn + '|')); }
+const keyOf = (pn, i) => `${pn}|${i}|out`;
+// Best offer to recommend: the cheapest installable condition on the shelf. As removed never wins.
+const bestFit = p => { const a = p.offers.filter(o => o.qty && o.c !== 'AR'); return a.length ? a.reduce((x, o) => o.aed < x.aed ? o : x) : null; };
+const certShort = p => { const o = bestFit(p) || p.offers.find(x => x.c !== 'AR') || p.offers[0]; return o.doc.startsWith('EASA') ? 'EASA' : o.doc.startsWith('FAA') ? 'FAA' : ''; };
+function cell(p, o, i, best, one) {
+  const k = keyOf(p.pn, i), on = !!S.cart[k], ar = o.c === 'AR';
+  const sub = o.qty ? `${o.qty} · ${o.from}` : t('onReq');
+  const tag = best ? `<em class="tag">${t('best')}</em>` : ar && o.qty ? `<em class="tag mute">${t('noCert')}</em>` : '';
+  const inner = `<span class="ct"><i class="cd c-${o.c}"></i>${one ? t(o.c) : o.c}${tag}</span><span class="cp">${money(o.aed)}</span><span class="cs">${on ? icon('i-check', 13) + t('inq') : sub}</span>`;
+  return o.qty
+    ? `<button type="button" class="cell${best ? ' best' : ''}${ar ? ' ar' : ''}${on ? ' in' : ''}${one ? ' one' : ''}" data-addo="${esc(p.pn)}|${i}" aria-label="${esc(`${t('add')}: ${p.pn}, ${t(o.c)}, ${money(o.aed)}, ${sub}`)}">${inner}</button>`
+    : `<span class="cell none${one ? ' one' : ''}" aria-hidden="true">${inner}</span>`;
+}
 function card(p) {
-  const o = bestOffer(p), avail = stock(p), saved = S.saved.includes(p.pn), inq = inCart(p.pn);
+  const best = bestFit(p), any = stock(p) > 0, cs = certShort(p);
+  const offers = any
+    ? `<div class="c-offers n${p.offers.length}">${p.offers.map((o, i) => cell(p, o, i, o === best, p.offers.length === 1)).join('')}</div>`
+    : `<button type="button" class="c-quote" data-add="${esc(p.pn)}"><span><i class="cd off"></i><span><strong>${t('notShelf')}</strong><small>${t('quoteIn')}</small></span></span><b>${t('getQuote')}</b></button>`;
   return `<article class="card" data-card="${p.pn}">
     <a class="c-link" href="#p-${p.pn}" aria-label="${esc(t('details') + ': ' + nameOf(p) + ' ' + p.pn)}"></a>
-    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async"><span class="chip c-${o.c}"><i></i>${t(o.c)}</span></div>
-    <button type="button" class="heart${saved ? ' on' : ''}" data-save="${p.pn}" aria-label="${esc((saved ? t('saveR') : t('saveA')) + ' ' + p.pn)}" aria-pressed="${saved}">${icon('i-heart', 17)}</button>
-    <div class="c-b">
-      <div class="c-info">
-        <div class="pn" dir="ltr" style="text-align:start">${p.pn}</div>
-        <h3>${nameOf(p)}</h3>
-        <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi></p>
-        <p class="c-stock${avail ? '' : ' out'}"><i></i>${o.qty ? `${t('inStock')(o.qty)}, ${o.from}` : t('out')}</p>
-      </div>
-      <div class="c-buy">
-        <div class="price"><small>${p.offers.length > 1 ? t('from') : '&nbsp;'}</small>${money(o.aed)}</div>
-        <button type="button" class="addbtn${inq ? ' in' : ''}${avail ? '' : ' alt'}" data-add="${p.pn}" aria-label="${esc((inq ? t('inq') : avail ? t('add') : t('request')) + ' ' + p.pn + ', ' + t(o.c))}">${buyLabel(inq, avail)}</button>
-      </div>
+    <div class="c-photo"><img src="${photo(p)}" alt="${esc(nameOf(p))}" loading="lazy" decoding="async"></div>
+    <div class="c-head">
+      <div class="pnrow"><span class="pn" dir="ltr">${p.pn}</span><button type="button" class="copy" data-copy="${p.pn}" aria-label="${esc(t('copy') + ' ' + p.pn)}">${icon('i-copy', 14)}</button>${cs ? `<span class="cert">${cs}</span>` : ''}</div>
+      <h3>${nameOf(p)}</h3>
+      <p class="fits">${t('fits')} <bdi>${p.fits.map(fleetName).join(', ')}</bdi></p>
     </div>
+    ${offers}
   </article>`;
 }
 const buyLabel = (inq, avail) => (inq ? icon('i-check', 15) : '') + `<span>${inq ? t('inq') : avail ? t('add') : t('request')}</span>`;
@@ -194,7 +203,7 @@ function shop(cat) {
 /* ---------- Product page ---------- */
 function openPdp(pn) {
   const p = byPn(pn); if (!p) { closeOverlays(); return; }
-  const oi = p.offers.indexOf(bestOffer(p));
+  const bf = bestFit(p); const oi = p.offers.indexOf(bf || bestOffer(p));
   S.pd = { pn, oi, type: 'out', qty: 1, view: p.view, tab: 'spec' };
   S.recent = [pn, ...S.recent.filter(x => x !== pn)].slice(0, 9); store('recent', S.recent);
   renderPdp();
@@ -205,9 +214,10 @@ function openPdp(pn) {
 const exUnit = o => Math.round(o.aed * .42 / 50) * 50, coreUnit = o => Math.round(o.aed * .58 / 50) * 50;
 function renderPdp() {
   const d = S.pd, p = byPn(d.pn), o = p.offers[d.oi], avail = o.qty > 0;
-  const unit = d.type === 'ex' && p.rotable ? exUnit(o) : o.aed;
+  const exOk = p.rotable && o.c !== 'AR'; if (!exOk) d.type = 'out';
+  const unit = d.type === 'ex' && exOk ? exUnit(o) : o.aed;
   const total = unit * d.qty, saved = S.saved.includes(p.pn);
-  const rows = [[t('sPn'), p.pn], [t('sAlt'), p.alts.join(', ')], [t('sMaker'), p.maker], [t('sAta'), p.ata], [t('sKg'), `${p.kg} kg`], [t('sSize'), `${p.size} cm`], [t('sHs'), p.hs], [t('sEccn'), p.eccn], [t('sWarr'), t('months')(p.warranty)]];
+  const rows = [[t('sPn'), p.pn], [t('sAlt'), p.alts.join(', ')], [t('sMaker'), p.maker], [t('sAta'), p.ata], [t('sKg'), `${p.kg} kg`], [t('sSize'), `${p.size} cm`], [t('sHs'), p.hs], [t('sEccn'), p.eccn], [t('sWarr'), o.c === 'AR' ? t('warrNone') : t('months')(o.c === 'SV' ? 6 : p.warranty)]];
   if (p.shelf) rows.push([t('sShelf'), t('shelfV')]);
   if (p.hazmat) rows.push([t('sHaz'), t('yes')]);
   const tabs = { spec: () => `<dl class="spec">${rows.map(([a, b]) => `<div><dt>${a}</dt><dd><bdi>${b}</bdi></dd></div>`).join('')}</dl>`,
@@ -233,7 +243,7 @@ function renderPdp() {
           <p class="pd-pn" dir="ltr" style="text-align:start"><strong>${p.pn}</strong> <span>/ ${p.alts[0]}</span></p>
           <h2 class="pd-h">${t('pCond')}</h2>
           <div class="opts">${p.offers.map((x, i) => `<button type="button" class="opt" data-opt="${i}" aria-pressed="${i === d.oi}"><strong>${t(x.c)} <bdi style="font-weight:400;color:var(--t2)">(${x.c})</bdi></strong><span class="pr">${money(x.aed)}</span><small>${t(x.c + 'd')}</small><small class="r">${x.qty ? `${t('inStock')(x.qty)}, ${x.from}` : t('out')}</small></button>`).join('')}</div>
-          ${p.rotable ? `<h2 class="pd-h">${t('pType')}</h2><div class="toggle"><button type="button" data-type="out" aria-pressed="${d.type === 'out'}">${t('pOut')}</button><button type="button" data-type="ex" aria-pressed="${d.type === 'ex'}">${t('pEx')}</button></div><p class="tnote">${d.type === 'ex' ? t('pExD')(money(coreUnit(o))) : t('pOutD')}</p>` : ''}
+          ${exOk ? `<h2 class="pd-h">${t('pType')}</h2><div class="toggle"><button type="button" data-type="out" aria-pressed="${d.type === 'out'}">${t('pOut')}</button><button type="button" data-type="ex" aria-pressed="${d.type === 'ex'}">${t('pEx')}</button></div><p class="tnote">${d.type === 'ex' ? t('pExD')(money(coreUnit(o))) : t('pOutD')}</p>` : ''}
           <div class="buybox">
             <div class="bb-top">
               <div class="bb-p">${money(total)}<small>${t('pSub')}, ${t('pIncl')(money(total * (1 + vatRate())))}</small></div>
@@ -322,12 +332,14 @@ function lineOf(key) {
   if (!p || oi === '') return { key, pn, p: null, unit: 0 };
   const o = p.offers[+oi]; return { key, pn, p, o, type, unit: type === 'ex' ? exUnit(o) : o.aed };
 }
+let lastAdd = null;
 function addToCart(pn, oi, type = 'out', qty = 1) {
   const p = byPn(pn);
   const key = p ? `${pn}|${oi ?? p.offers.indexOf(bestOffer(p))}|${type}` : `${pn}||`;
   S.cart[key] = { qty: (S.cart[key]?.qty || 0) + qty };
   saveCart();
-  document.querySelectorAll(`[data-add="${CSS.escape(pn)}"]`).forEach(b => { b.classList.add('in'); b.innerHTML = buyLabel(true, true); });
+  lastAdd = { key, qty };
+  if (p) refreshCards(pn);
 }
 function totals() {
   let sub = 0, hasUnknown = false;
@@ -443,7 +455,7 @@ function toggleSave(pn) {
 let toastT = 0;
 function toastAdded(p, o) {
   const el = $('toast');
-  el.innerHTML = `<img src="${photo(p)}" alt=""><div><strong>${t('added')}</strong><span>${esc(nameOf(p))}, ${t(o.c)}, ${money(o.aed)}</span></div><button class="solid small" type="button" data-opencart>${t('viewCart')}</button>`;
+  el.innerHTML = `<img src="${photo(p)}" alt=""><div><strong>${t('added')}</strong><span>${t(o.c)} · ${money(o.aed)}</span></div><button class="ghost small" type="button" data-undo>${t('undo')}</button><button class="solid small" type="button" data-opencart>${t('viewCart')}</button>`;
   el.hidden = false; void el.offsetWidth; el.classList.add('on');
   clearTimeout(toastT); toastT = setTimeout(hideToast, 4200);
 }
@@ -513,8 +525,19 @@ document.addEventListener('click', e => {
   if (d.add) {
     const p = byPn(d.add);
     if (inCart(d.add)) openDrawer();
-    else if (p && !stock(p)) { addToCart(d.add); openDrawer(); }
-    else { addToCart(d.add); if (p) toastAdded(p, bestOffer(p)); }
+    else { addToCart(d.add); openDrawer(); }
+  }
+  else if (d.addo) {
+    const [pn, i] = d.addo.split('|'), p = byPn(pn), k = keyOf(pn, +i);
+    if (S.cart[k]) openDrawer(); else { addToCart(pn, +i); refreshCards(pn); toastAdded(p, p.offers[+i]); }
+  }
+  else if (d.copy) {
+    navigator.clipboard?.writeText(d.copy).catch(() => {});
+    b.classList.add('done'); b.innerHTML = icon('i-check', 14); setTimeout(() => { b.classList.remove('done'); b.innerHTML = icon('i-copy', 14); }, 1400);
+  }
+  else if ('undo' in d) {
+    if (lastAdd && S.cart[lastAdd.key]) { S.cart[lastAdd.key].qty -= lastAdd.qty; if (S.cart[lastAdd.key].qty < 1) delete S.cart[lastAdd.key]; saveCart(); refreshCards(lastAdd.key.split('|')[0]); }
+    lastAdd = null; hideToast();
   }
   else if (d.save) toggleSave(d.save);
   else if ('fleet' in d) {
@@ -532,7 +555,7 @@ document.addEventListener('click', e => {
   else if (b.id === 'mFilters') $('side').classList.add('open');
   else if (b.id === 'sideClose' || b.id === 'sideApply') $('side').classList.remove('open');
   else if (d.moreq) { S.cart[d.moreq].qty++; saveCart(); renderDrawer(); }
-  else if (d.less) { if (--S.cart[d.less].qty < 1) { delete S.cart[d.less]; renderGrid(); } saveCart(); renderDrawer(); }
+  else if (d.less) { if (--S.cart[d.less].qty < 1) { delete S.cart[d.less]; refreshCards(d.less.split('|')[0]); } saveCart(); renderDrawer(); }
   else if ('opencart' in d) { hideToast(); closeOverlaysKeepPd(); openDrawer(); }
   else if (b.id === 'menuBtn') openMenu();
   else if (b.id === 'demoOk') { $('demo').hidden = true; store('demoSeen', 1); }
@@ -551,12 +574,13 @@ document.addEventListener('click', e => {
   else if (d.certopen) { const [pn, i] = d.certopen.split('|'), p = byPn(pn); openCert(p, p.offers[+i]); }
   else if (d.cert) { certKind = d.cert; renderTrace(); }
   else if (b.id === 'certwrap') { const { p, o } = certSample(); openCert(p, o); }
-  else if (b.id === 'pdAdd') { const x = S.pd, p = byPn(x.pn); addToCart(p.pn, x.oi, p.rotable ? x.type : 'out', x.qty); closeOverlaysKeepPd(); openDrawer(); }
+  else if (b.id === 'pdAdd') { const x = S.pd, p = byPn(x.pn); addToCart(p.pn, x.oi, p.rotable && p.offers[x.oi].c !== 'AR' ? x.type : 'out', x.qty); closeOverlaysKeepPd(); openDrawer(); }
   else if (b.id === 'pdBack') { history.length > 1 ? history.back() : leaveOverlay(); }
   else if (b.id === 'bulkGo') runBulk();
   else if (b.id === 'bulkAdd') { bulkRows.forEach(r => addToCart(r.pn, undefined, 'out', r.qty)); $('modal').close(); renderGrid(); openDrawer(); }
 });
 const closeOverlaysKeepPd = () => {};
+function refreshCards(pn) { document.querySelectorAll(`[data-card="${CSS.escape(pn)}"]`).forEach(el => { el.outerHTML = card(byPn(pn)); }); }
 const leaveOverlayIfPd = () => { if (S.pd) leaveOverlay(); };
 function renderPdpKeep() { const el = $('pdp'), top = el.scrollTop; renderPdp(); el.scrollTop = top; }
 document.addEventListener('change', e => {
